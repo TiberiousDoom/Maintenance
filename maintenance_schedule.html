@@ -358,7 +358,6 @@
         .calendar-info-icon {
             display: none;
             position: relative;
-            margin-bottom: 15px;
         }
         .calendar-info-icon.visible {
             display: inline-block;
@@ -1180,12 +1179,13 @@
         
         <!-- GANTT CHART TAB -->
         <div id="gantt" class="tab-content">
-            <h2 style="margin: 20px 0; color: #2c3e50;">Annual Maintenance Calendar</h2>
-
-            <!-- Info Icon (shown after toast dismisses) -->
-            <div class="calendar-info-icon" id="calendar-info">
-                <button class="info-btn">i</button>
-                <div class="info-tooltip">This calendar shows your scheduled maintenance tasks based on the "Last Completed" dates you've entered. Tasks with due dates appear as dots in the corresponding months. Set completion dates in the Schedule tab to populate this calendar.</div>
+            <div style="display: flex; align-items: center; gap: 10px; margin: 20px 0;">
+                <h2 style="color: #2c3e50; margin: 0;">Annual Maintenance Calendar</h2>
+                <!-- Info Icon (shown after toast dismisses) -->
+                <div class="calendar-info-icon" id="calendar-info">
+                    <button class="info-btn">i</button>
+                    <div class="info-tooltip">This calendar shows your scheduled maintenance tasks based on the "Last Completed" dates you've entered. Tasks with due dates appear as dots in the corresponding months. Set completion dates in the Schedule tab to populate this calendar.</div>
+                </div>
             </div>
 
             <div class="gantt-container">
