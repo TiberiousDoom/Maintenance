@@ -254,11 +254,11 @@
 
         /* Date Input Styles */
         .date-input {
-            padding: 6px 10px;
+            padding: 6px 8px;
             border: 1px solid #ddd;
             border-radius: 5px;
             font-size: 0.85em;
-            width: 130px;
+            width: 140px;
             cursor: pointer;
         }
         .date-input:focus {
@@ -268,10 +268,11 @@
         }
         .next-due {
             font-weight: 500;
-            padding: 4px 10px;
+            padding: 4px 8px;
             border-radius: 15px;
-            font-size: 0.8em;
+            font-size: 0.75em;
             white-space: nowrap;
+            display: inline-block;
         }
         .due-overdue {
             background: #ffebee;
@@ -292,6 +293,16 @@
         .due-none {
             background: #f5f5f5;
             color: #999;
+        }
+
+        /* Table column widths */
+        #maintenance-table th:nth-child(5),
+        #maintenance-table td:nth-child(5) {
+            min-width: 150px;
+        }
+        #maintenance-table th:nth-child(6),
+        #maintenance-table td:nth-child(6) {
+            min-width: 160px;
         }
 
         /* Dynamic Calendar Styles */
@@ -2166,6 +2177,8 @@
             const tasksByCategory = {};
             const currentYear = new Date().getFullYear();
             const currentMonth = new Date().getMonth();
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
 
             // Group tasks by category
             rows.forEach(row => {
@@ -2176,6 +2189,8 @@
                 const priority = parseInt(row.getAttribute('data-priority')) || 4;
                 const dateInput = row.querySelector('.last-completed');
                 const lastCompleted = dateInput?.value;
+
+                if (!category) return; // Skip rows without category
 
                 if (!tasksByCategory[category]) {
                     tasksByCategory[category] = [];
@@ -2219,20 +2234,43 @@
                 tasks.forEach(task => {
                     html += `<tr><td>${task.name}</td>`;
 
+                    // Calculate the next due date for this task
+                    let nextDueDate = null;
+                    let isOverdue = false;
+
+                    if (task.lastCompleted) {
+                        const lastDate = new Date(task.lastCompleted + 'T00:00:00');
+                        nextDueDate = new Date(lastDate);
+                        nextDueDate.setDate(nextDueDate.getDate() + task.freqDays);
+
+                        // Check if overdue
+                        if (nextDueDate < today) {
+                            isOverdue = true;
+                        }
+                    }
+
                     // Generate dots for each month
                     for (let month = 0; month < 12; month++) {
                         let dotClass = '';
 
                         if (task.lastCompleted) {
-                            const lastDate = new Date(task.lastCompleted);
-                            let checkDate = new Date(lastDate);
+                            const lastDate = new Date(task.lastCompleted + 'T00:00:00');
 
                             // Check if task was completed this month
                             if (lastDate.getFullYear() === currentYear && lastDate.getMonth() === month) {
                                 dotClass = 'completed';
-                            } else {
-                                // Calculate all due dates from last completed
-                                checkDate = new Date(lastDate);
+                            }
+                            // If overdue and this is current month, show as overdue here
+                            else if (isOverdue && month === currentMonth) {
+                                dotClass = 'overdue';
+                            }
+                            // Calculate future due dates
+                            else if (!isOverdue || month > currentMonth) {
+                                // Find the due date that falls in this month
+                                let checkDate = new Date(lastDate);
+                                checkDate.setDate(checkDate.getDate() + task.freqDays);
+
+                                // Keep adding frequency until we're at or past this month
                                 while (checkDate.getFullYear() < currentYear ||
                                        (checkDate.getFullYear() === currentYear && checkDate.getMonth() < month)) {
                                     checkDate.setDate(checkDate.getDate() + task.freqDays);
@@ -2240,16 +2278,9 @@
 
                                 // Check if due in this month
                                 if (checkDate.getFullYear() === currentYear && checkDate.getMonth() === month) {
-                                    const today = new Date();
-                                    if (month < currentMonth) {
-                                        dotClass = 'overdue';
-                                    } else if (month === currentMonth) {
-                                        if (checkDate < today) {
-                                            dotClass = 'overdue';
-                                        } else {
-                                            dotClass = 'due';
-                                        }
-                                    } else {
+                                    if (month === currentMonth) {
+                                        dotClass = 'due';
+                                    } else if (month > currentMonth) {
                                         dotClass = 'scheduled';
                                     }
                                 }
@@ -2266,6 +2297,11 @@
                     html += '</tr>';
                 });
             });
+
+            // If no tasks have dates set, show a message
+            if (html === '') {
+                html = '<tr><td colspan="13" style="text-align: center; padding: 40px; color: #666;">Enter completion dates in the Schedule tab to see your maintenance calendar.</td></tr>';
+            }
 
             calendarBody.innerHTML = html;
         }
