@@ -1099,21 +1099,10 @@
             </div>
             <div class="gantt-container">
                 <table class="gantt-table" id="calendar-table">
-                    <thead>
+                    <thead id="calendar-header">
                         <tr>
                             <th>Task</th>
-                            <th>Jan</th>
-                            <th>Feb</th>
-                            <th>Mar</th>
-                            <th>Apr</th>
-                            <th>May</th>
-                            <th>Jun</th>
-                            <th>Jul</th>
-                            <th>Aug</th>
-                            <th>Sep</th>
-                            <th>Oct</th>
-                            <th>Nov</th>
-                            <th>Dec</th>
+                            <!-- Month headers generated dynamically -->
                         </tr>
                     </thead>
                     <tbody id="calendar-body">
@@ -2160,8 +2149,9 @@
 
         function updateCalendar() {
             var calendarBody = document.getElementById('calendar-body');
-            if (!calendarBody) {
-                console.error('Calendar body not found');
+            var calendarHeader = document.getElementById('calendar-header');
+            if (!calendarBody || !calendarHeader) {
+                console.error('Calendar elements not found');
                 return;
             }
 
@@ -2178,10 +2168,31 @@
             }
 
             var allRows = tbody.getElementsByTagName('tr');
-            var currentYear = new Date().getFullYear();
-            var currentMonth = new Date().getMonth();
             var today = new Date();
             today.setHours(0, 0, 0, 0);
+            var currentMonth = today.getMonth();
+            var currentYear = today.getFullYear();
+
+            // Generate rolling 12-month array starting from current month
+            var monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            var months = [];
+            for (var i = 0; i < 12; i++) {
+                var monthIndex = (currentMonth + i) % 12;
+                var year = currentYear + Math.floor((currentMonth + i) / 12);
+                months.push({
+                    month: monthIndex,
+                    year: year,
+                    label: monthNames[monthIndex] + ' ' + year
+                });
+            }
+
+            // Update header row
+            var headerHtml = '<tr><th>Task</th>';
+            for (var i = 0; i < months.length; i++) {
+                headerHtml += '<th>' + months[i].label + '</th>';
+            }
+            headerHtml += '</tr>';
+            calendarHeader.innerHTML = headerHtml;
 
             // Category display names and order
             var categoryNames = {
@@ -2249,34 +2260,36 @@
                         isOverdue = nextDueDate < today;
                     }
 
-                    // Generate cell for each month
-                    for (var month = 0; month < 12; month++) {
+                    // Generate cell for each of the 12 rolling months
+                    for (var m = 0; m < months.length; m++) {
                         var cellContent = '';
+                        var targetMonth = months[m].month;
+                        var targetYear = months[m].year;
 
                         if (task.lastCompleted) {
                             var lastDate = new Date(task.lastCompleted + 'T12:00:00');
 
-                            // Check if completed in this month (current year)
-                            if (lastDate.getFullYear() === currentYear && lastDate.getMonth() === month) {
+                            // Check if completed in this month
+                            if (lastDate.getFullYear() === targetYear && lastDate.getMonth() === targetMonth) {
                                 cellContent = '<span class="gantt-dot completed"></span>';
                             }
-                            // If overdue, show in current month
-                            else if (isOverdue && month === currentMonth) {
+                            // If overdue and this is the first month (current month), show as overdue
+                            else if (isOverdue && m === 0) {
                                 cellContent = '<span class="gantt-dot overdue"></span>';
                             }
-                            // Calculate scheduled due dates for future months
-                            else if (month >= currentMonth && !isOverdue) {
+                            // Calculate scheduled due dates
+                            else if (!isOverdue || m > 0) {
                                 var checkDate = new Date(lastDate.getTime());
                                 checkDate.setDate(checkDate.getDate() + task.freqDays);
 
-                                // Find the due date in or after this month
-                                while (checkDate.getFullYear() < currentYear ||
-                                       (checkDate.getFullYear() === currentYear && checkDate.getMonth() < month)) {
+                                // Find the due date that falls in or after target month
+                                while (checkDate.getFullYear() < targetYear ||
+                                       (checkDate.getFullYear() === targetYear && checkDate.getMonth() < targetMonth)) {
                                     checkDate.setDate(checkDate.getDate() + task.freqDays);
                                 }
 
-                                if (checkDate.getFullYear() === currentYear && checkDate.getMonth() === month) {
-                                    if (month === currentMonth) {
+                                if (checkDate.getFullYear() === targetYear && checkDate.getMonth() === targetMonth) {
+                                    if (m === 0) {
                                         cellContent = '<span class="gantt-dot due"></span>';
                                     } else {
                                         cellContent = '<span class="gantt-dot scheduled"></span>';
