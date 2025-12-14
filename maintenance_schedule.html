@@ -314,7 +314,15 @@
             animation: pulse 1s infinite;
         }
         .gantt-dot.completed {
-            background: #27ae60;
+            background: transparent;
+            width: auto;
+            height: auto;
+        }
+        .gantt-dot.completed::after {
+            content: '✓';
+            color: #27ae60;
+            font-size: 16px;
+            font-weight: bold;
         }
         @keyframes pulse {
             0%, 100% { opacity: 1; }
@@ -1141,8 +1149,8 @@
                         <span>Overdue</span>
                     </div>
                     <div class="legend-item">
-                        <span class="gantt-dot completed"></span>
-                        <span>Completed This Month</span>
+                        <span style="color: #27ae60; font-weight: bold; font-size: 16px;">✓</span>
+                        <span>Completed</span>
                     </div>
                     <div class="legend-item">
                         <span class="gantt-dot scheduled"></span>
@@ -2173,42 +2181,17 @@
             const calendarBody = document.getElementById('calendar-body');
             if (!calendarBody) return;
 
-            const rows = document.querySelectorAll('#maintenance-table tbody tr');
-            const tasksByCategory = {};
+            const table = document.getElementById('maintenance-table');
+            if (!table) return;
+
+            const rows = table.querySelectorAll('tbody tr[data-task-id]');
             const currentYear = new Date().getFullYear();
             const currentMonth = new Date().getMonth();
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
-            // Group tasks by category
-            rows.forEach(row => {
-                const taskId = row.getAttribute('data-task-id');
-                const category = row.getAttribute('data-category');
-                const taskName = row.querySelector('.task-link')?.textContent || '';
-                const freqDays = parseInt(row.getAttribute('data-freq-days')) || 365;
-                const priority = parseInt(row.getAttribute('data-priority')) || 4;
-                const dateInput = row.querySelector('.last-completed');
-                const lastCompleted = dateInput?.value;
-
-                if (!category) return; // Skip rows without category
-
-                if (!tasksByCategory[category]) {
-                    tasksByCategory[category] = [];
-                }
-
-                tasksByCategory[category].push({
-                    id: taskId,
-                    name: taskName,
-                    freqDays: freqDays,
-                    priority: priority,
-                    lastCompleted: lastCompleted
-                });
-            });
-
-            // Category display names
+            // Category display names and order
             const categoryNames = {
-                kitchen: 'Kitchen',
-                bathroom: 'Bathroom',
                 hvac: 'HVAC & Climate Control',
                 plumbing: 'Plumbing',
                 electrical: 'Electrical & Safety',
@@ -2216,94 +2199,106 @@
                 landscaping: 'Landscaping & Outdoor',
                 humidity: 'Humidity & Moisture',
                 appliances: 'Appliances',
+                kitchen: 'Kitchen',
+                bathroom: 'Bathroom',
                 general: 'General Maintenance'
             };
+            const categoryOrder = Object.keys(categoryNames);
+
+            // Group tasks by category
+            const tasksByCategory = {};
+            rows.forEach(row => {
+                const category = row.getAttribute('data-category');
+                if (!category) return;
+
+                const taskLink = row.querySelector('.task-link');
+                const dateInput = row.querySelector('.last-completed');
+
+                const task = {
+                    name: taskLink ? taskLink.textContent : 'Unknown Task',
+                    freqDays: parseInt(row.getAttribute('data-freq-days')) || 365,
+                    priority: parseInt(row.getAttribute('data-priority')) || 4,
+                    lastCompleted: dateInput ? dateInput.value : ''
+                };
+
+                if (!tasksByCategory[category]) {
+                    tasksByCategory[category] = [];
+                }
+                tasksByCategory[category].push(task);
+            });
 
             // Build calendar HTML
             let html = '';
-            const categoryOrder = ['hvac', 'plumbing', 'electrical', 'exterior', 'landscaping', 'humidity', 'appliances', 'kitchen', 'bathroom', 'general'];
 
             categoryOrder.forEach(category => {
                 const tasks = tasksByCategory[category];
                 if (!tasks || tasks.length === 0) return;
 
-                // Category header
-                html += `<tr class="gantt-section-row"><td colspan="13">${categoryNames[category] || category}</td></tr>`;
+                // Category header row
+                html += '<tr class="gantt-section-row"><td colspan="13">' + categoryNames[category] + '</td></tr>';
 
                 // Task rows
                 tasks.forEach(task => {
-                    html += `<tr><td>${task.name}</td>`;
+                    html += '<tr><td>' + task.name + '</td>';
 
-                    // Calculate the next due date for this task
-                    let nextDueDate = null;
+                    // Determine if task is overdue
                     let isOverdue = false;
-
                     if (task.lastCompleted) {
-                        const lastDate = new Date(task.lastCompleted + 'T00:00:00');
-                        nextDueDate = new Date(lastDate);
-                        nextDueDate.setDate(nextDueDate.getDate() + task.freqDays);
-
-                        // Check if overdue
-                        if (nextDueDate < today) {
-                            isOverdue = true;
-                        }
+                        const lastDate = new Date(task.lastCompleted + 'T12:00:00');
+                        const nextDue = new Date(lastDate);
+                        nextDue.setDate(nextDue.getDate() + task.freqDays);
+                        isOverdue = nextDue < today;
                     }
 
-                    // Generate dots for each month
+                    // Generate cell for each month
                     for (let month = 0; month < 12; month++) {
-                        let dotClass = '';
+                        let cellContent = '';
 
                         if (task.lastCompleted) {
-                            const lastDate = new Date(task.lastCompleted + 'T00:00:00');
+                            const lastDate = new Date(task.lastCompleted + 'T12:00:00');
 
-                            // Check if task was completed this month
+                            // Check if completed in this month (current year)
                             if (lastDate.getFullYear() === currentYear && lastDate.getMonth() === month) {
-                                dotClass = 'completed';
+                                cellContent = '<span class="gantt-dot completed"></span>';
                             }
-                            // If overdue and this is current month, show as overdue here
+                            // If overdue, show in current month
                             else if (isOverdue && month === currentMonth) {
-                                dotClass = 'overdue';
+                                cellContent = '<span class="gantt-dot overdue"></span>';
                             }
-                            // Calculate future due dates
-                            else if (!isOverdue || month > currentMonth) {
-                                // Find the due date that falls in this month
+                            // Calculate scheduled due dates for future months
+                            else if (month >= currentMonth) {
                                 let checkDate = new Date(lastDate);
-                                checkDate.setDate(checkDate.getDate() + task.freqDays);
-
-                                // Keep adding frequency until we're at or past this month
+                                // Add frequency intervals until we reach or pass this month
                                 while (checkDate.getFullYear() < currentYear ||
-                                       (checkDate.getFullYear() === currentYear && checkDate.getMonth() < month)) {
+                                       (checkDate.getFullYear() === currentYear && checkDate.getMonth() <= month)) {
                                     checkDate.setDate(checkDate.getDate() + task.freqDays);
-                                }
 
-                                // Check if due in this month
-                                if (checkDate.getFullYear() === currentYear && checkDate.getMonth() === month) {
-                                    if (month === currentMonth) {
-                                        dotClass = 'due';
-                                    } else if (month > currentMonth) {
-                                        dotClass = 'scheduled';
+                                    // Check if this due date falls in the target month
+                                    if (checkDate.getFullYear() === currentYear && checkDate.getMonth() === month) {
+                                        if (month === currentMonth && !isOverdue) {
+                                            cellContent = '<span class="gantt-dot due"></span>';
+                                        } else if (month > currentMonth) {
+                                            cellContent = '<span class="gantt-dot scheduled"></span>';
+                                        }
+                                        break;
+                                    }
+                                    // Stop if we've gone past the target month
+                                    if (checkDate.getFullYear() > currentYear ||
+                                        (checkDate.getFullYear() === currentYear && checkDate.getMonth() > month)) {
+                                        break;
                                     }
                                 }
                             }
                         }
 
-                        if (dotClass) {
-                            html += `<td><span class="gantt-dot ${dotClass}"></span></td>`;
-                        } else {
-                            html += '<td></td>';
-                        }
+                        html += '<td>' + cellContent + '</td>';
                     }
 
                     html += '</tr>';
                 });
             });
 
-            // If no tasks have dates set, show a message
-            if (html === '') {
-                html = '<tr><td colspan="13" style="text-align: center; padding: 40px; color: #666;">Enter completion dates in the Schedule tab to see your maintenance calendar.</td></tr>';
-            }
-
-            calendarBody.innerHTML = html;
+            calendarBody.innerHTML = html || '<tr><td colspan="13" style="text-align:center;padding:20px;color:#666;">No tasks found. Check the Schedule tab.</td></tr>';
         }
 
         // ==================== TAB NAVIGATION ====================
