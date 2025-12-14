@@ -329,13 +329,104 @@
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
         }
-        .calendar-note {
+        /* Toast Notification Styles */
+        .toast-notification {
+            position: fixed;
+            top: 150px;
+            left: 50%;
+            transform: translateX(-50%);
             background: #fff3cd;
             border: 1px solid #ffc107;
-            border-radius: 5px;
-            padding: 10px 15px;
-            margin-bottom: 20px;
+            border-radius: 8px;
+            padding: 15px 20px;
             font-size: 0.9em;
+            max-width: 600px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 1000;
+            opacity: 1;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        .toast-notification.hiding {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-20px);
+        }
+        .toast-notification.hidden {
+            display: none;
+        }
+
+        /* Info Icon Styles */
+        .calendar-info-icon {
+            display: none;
+            position: relative;
+            margin-bottom: 15px;
+        }
+        .calendar-info-icon.visible {
+            display: inline-block;
+        }
+        .info-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #3498db;
+            color: white;
+            border: none;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: Georgia, serif;
+            font-style: italic;
+        }
+        .info-btn:hover {
+            background: #2980b9;
+        }
+        .info-tooltip {
+            position: absolute;
+            left: 30px;
+            top: -5px;
+            background: #333;
+            color: white;
+            padding: 12px 15px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            width: 350px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+            z-index: 100;
+            line-height: 1.5;
+        }
+        .info-tooltip::before {
+            content: '';
+            position: absolute;
+            left: -8px;
+            top: 12px;
+            border-width: 6px;
+            border-style: solid;
+            border-color: transparent #333 transparent transparent;
+        }
+        .calendar-info-icon:hover .info-tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Sticky Calendar Header */
+        .gantt-container {
+            overflow-x: auto;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            max-height: calc(100vh - 250px);
+            overflow-y: auto;
+        }
+        #calendar-header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        #calendar-header th {
+            background: #f8f9fa;
+            box-shadow: 0 2px 3px rgba(0,0,0,0.1);
         }
         
         /* Detail Page Styles */
@@ -456,13 +547,6 @@
         }
         
         /* Gantt Chart Styles */
-        .gantt-container {
-            overflow-x: auto;
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
         
         .gantt-table {
             min-width: 900px;
@@ -552,6 +636,11 @@
     </style>
 </head>
 <body>
+    <!-- Toast Notification -->
+    <div class="toast-notification" id="calendar-toast">
+        <strong>Note:</strong> This calendar shows your scheduled maintenance tasks based on the "Last Completed" dates you've entered. Tasks with due dates appear as dots in the corresponding months. Set completion dates in the Schedule tab to populate this calendar.
+    </div>
+
     <header>
         <h1>🏠 Home Maintenance Schedule</h1>
         <p>Click on any task for detailed step-by-step instructions</p>
@@ -1093,15 +1182,17 @@
         <!-- GANTT CHART TAB -->
         <div id="gantt" class="tab-content">
             <h2 style="margin: 20px 0; color: #2c3e50;">Annual Maintenance Calendar</h2>
-            <div class="calendar-note">
-                <strong>Note:</strong> This calendar shows your scheduled maintenance tasks based on the "Last Completed" dates you've entered.
-                Tasks with due dates appear as dots in the corresponding months. Set completion dates in the Schedule tab to populate this calendar.
+
+            <!-- Info Icon (shown after toast dismisses) -->
+            <div class="calendar-info-icon" id="calendar-info">
+                <button class="info-btn">i</button>
+                <div class="info-tooltip">This calendar shows your scheduled maintenance tasks based on the "Last Completed" dates you've entered. Tasks with due dates appear as dots in the corresponding months. Set completion dates in the Schedule tab to populate this calendar.</div>
             </div>
+
             <div class="gantt-container">
                 <table class="gantt-table" id="calendar-table">
                     <thead id="calendar-header">
                         <tr>
-                            <th>Task</th>
                             <!-- Month headers generated dynamically -->
                         </tr>
                     </thead>
@@ -2186,8 +2277,8 @@
                 });
             }
 
-            // Update header row
-            var headerHtml = '<tr><th>Task</th>';
+            // Update header row (no "Task" column label, just empty first cell)
+            var headerHtml = '<tr><th></th>';
             for (var i = 0; i < months.length; i++) {
                 headerHtml += '<th>' + months[i].label + '</th>';
             }
@@ -2463,6 +2554,54 @@
 
         // Initial calendar update
         updateCalendar();
+
+        // ==================== TOAST NOTIFICATION ====================
+
+        // Show toast when calendar tab is first visited
+        var toastShown = false;
+        var originalTabHandler = null;
+
+        function showCalendarToast() {
+            if (toastShown) return;
+            toastShown = true;
+
+            var toast = document.getElementById('calendar-toast');
+            var infoIcon = document.getElementById('calendar-info');
+
+            if (!toast || !infoIcon) return;
+
+            // Show the toast
+            toast.classList.remove('hidden', 'hiding');
+            toast.style.display = 'block';
+
+            // After 8 seconds (enough time to read), start hiding
+            setTimeout(function() {
+                toast.classList.add('hiding');
+
+                // After fade animation, hide completely and show info icon
+                setTimeout(function() {
+                    toast.classList.add('hidden');
+                    infoIcon.classList.add('visible');
+                }, 500);
+            }, 8000);
+        }
+
+        // Initially hide the toast until calendar tab is visited
+        var toastEl = document.getElementById('calendar-toast');
+        if (toastEl) {
+            toastEl.style.display = 'none';
+        }
+
+        // Hook into tab switching to show toast when calendar is first opened
+        document.querySelectorAll('nav a[data-tab]').forEach(function(link) {
+            link.addEventListener('click', function() {
+                var tabId = this.getAttribute('data-tab');
+                if (tabId === 'gantt') {
+                    // Small delay to let tab switch animation start
+                    setTimeout(showCalendarToast, 300);
+                }
+            });
+        });
     </script>
 </body>
 </html>
