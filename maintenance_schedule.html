@@ -1,0 +1,2160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Maintenance Schedule</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        
+        header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        nav {
+            background: #34495e;
+            padding: 10px 20px;
+            position: sticky;
+            top: 98px;
+            z-index: 99;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 5px;
+        }
+        
+        nav a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            transition: background 0.3s;
+        }
+        
+        nav a:hover {
+            background: #3498db;
+        }
+        
+        nav a.active {
+            background: #3498db;
+        }
+        
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Schedule Table Styles */
+        .schedule-section {
+            background: white;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .section-header {
+            padding: 15px 20px;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .section-header::after {
+            content: '▼';
+            font-size: 0.8em;
+            transition: transform 0.3s;
+        }
+        
+        .section-header.collapsed::after {
+            transform: rotate(-90deg);
+        }
+        
+        .section-content {
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        
+        .section-content.collapsed {
+            max-height: 0 !important;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #555;
+            font-size: 0.85em;
+            text-transform: uppercase;
+        }
+        
+        tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .task-link {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        
+        .task-link:hover {
+            text-decoration: underline;
+        }
+        
+        .priority {
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        
+        .priority-critical {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .priority-high {
+            background: #fff3e0;
+            color: #e65100;
+        }
+        
+        .priority-medium {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+        
+        .priority-low {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        /* Section Colors */
+        .kitchen .section-header { background: linear-gradient(135deg, #27ae60, #2ecc71); }
+        .bathroom .section-header { background: linear-gradient(135deg, #2980b9, #3498db); }
+        .hvac .section-header { background: linear-gradient(135deg, #f39c12, #f1c40f); }
+        .plumbing .section-header { background: linear-gradient(135deg, #2c3e50, #34495e); }
+        .electrical .section-header { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+        .exterior .section-header { background: linear-gradient(135deg, #8e44ad, #9b59b6); }
+        .landscaping .section-header { background: linear-gradient(135deg, #16a085, #1abc9c); }
+        .humidity .section-header { background: linear-gradient(135deg, #3498db, #5dade2); }
+        .appliances .section-header { background: linear-gradient(135deg, #e91e63, #f06292); }
+        .general .section-header { background: linear-gradient(135deg, #607d8b, #78909c); }
+        
+        /* Detail Page Styles */
+        .detail-section {
+            background: white;
+            border-radius: 10px;
+            margin: 20px 0;
+            padding: 25px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .detail-section h2 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .task-detail {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .task-detail h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .task-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .meta-item {
+            background: white;
+            padding: 12px 15px;
+            border-radius: 5px;
+        }
+        
+        .meta-item strong {
+            color: #555;
+            display: block;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        
+        .meta-item.safety {
+            background: #ffebee;
+            border: 1px solid #ffcdd2;
+        }
+        
+        .meta-item.safety strong {
+            color: #c62828;
+        }
+        
+        .steps-list {
+            background: white;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        
+        .steps-list h4 {
+            color: #555;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+            text-transform: uppercase;
+        }
+        
+        .steps-list ol {
+            margin-left: 20px;
+        }
+        
+        .steps-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .steps-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .tips-box {
+            background: #e8f5e9;
+            border: 1px solid #c8e6c9;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        .tips-box strong {
+            color: #2e7d32;
+            display: block;
+            margin-bottom: 8px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        
+        .back-link::before {
+            content: '← ';
+        }
+        
+        /* Gantt Chart Styles */
+        .gantt-container {
+            overflow-x: auto;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .gantt-table {
+            min-width: 900px;
+        }
+        
+        .gantt-table th {
+            text-align: center;
+            padding: 10px 5px;
+            min-width: 50px;
+        }
+        
+        .gantt-table td {
+            text-align: center;
+            padding: 8px 5px;
+        }
+        
+        .gantt-table td:first-child {
+            text-align: left;
+            min-width: 200px;
+            font-weight: 500;
+        }
+        
+        .gantt-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        
+        .gantt-dot.scheduled {
+            background: #27ae60;
+        }
+        
+        .gantt-dot.critical {
+            background: #e74c3c;
+        }
+        
+        .gantt-section-row td {
+            background: #34495e;
+            color: white;
+            font-weight: bold;
+            padding: 10px;
+        }
+        
+        .legend {
+            display: flex;
+            gap: 30px;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* Print Styles */
+        @media print {
+            nav, header { position: static; }
+            .section-header::after { display: none; }
+            .tab-content { display: block !important; }
+        }
+        
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            nav {
+                top: 80px;
+            }
+            
+            nav a {
+                padding: 6px 10px;
+                font-size: 0.8em;
+            }
+            
+            th, td {
+                padding: 8px 10px;
+                font-size: 0.9em;
+            }
+            
+            .task-meta {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🏠 Home Maintenance Schedule</h1>
+        <p>Click on any task for detailed step-by-step instructions</p>
+    </header>
+    
+    <nav id="main-nav">
+        <a href="#" class="active" data-tab="schedule">📋 Schedule</a>
+        <a href="#" data-tab="gantt">📅 Annual Calendar</a>
+        <a href="#" data-tab="kitchen">🍳 Kitchen</a>
+        <a href="#" data-tab="bathroom">🚿 Bathroom</a>
+        <a href="#" data-tab="hvac">❄️ HVAC</a>
+        <a href="#" data-tab="plumbing">🔧 Plumbing</a>
+        <a href="#" data-tab="electrical">⚡ Electrical</a>
+        <a href="#" data-tab="exterior">🏡 Exterior</a>
+        <a href="#" data-tab="landscaping">🌳 Landscaping</a>
+        <a href="#" data-tab="humidity">💧 Humidity</a>
+        <a href="#" data-tab="appliances">🔌 Appliances</a>
+        <a href="#" data-tab="general">🔍 General</a>
+    </nav>
+    
+    <div class="container">
+        <!-- MAIN SCHEDULE TAB -->
+        <div id="schedule" class="tab-content active">
+            <h2 style="margin: 20px 0; color: #2c3e50;">Maintenance Schedule</h2>
+            
+            <!-- Kitchen Section -->
+            <div class="schedule-section kitchen">
+                <div class="section-header">Kitchen</div>
+                <div class="section-content">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Task</th>
+                                <th>Frequency</th>
+                                <th>Priority</th>
+                                <th>Est. Time</th>
+                                <th>Pro Required?</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><a class="task-link" data-tab="kitchen" data-task="refrigerator-coils">Clean refrigerator coils</a></td>
+                                <td>Quarterly</td>
+                                <td><span class="priority priority-low">Low</span></td>
+                                <td>20 min</td>
+                                <td>DIY</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="kitchen" data-task="garbage-disposal">Clean garbage disposal</a></td>
+                                <td>Quarterly</td>
+                                <td><span class="priority priority-low">Low</span></td>
+                                <td>5 min</td>
+                                <td>DIY</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Bathroom Section -->
+            <div class="schedule-section bathroom">
+                <div class="section-header">Bathroom</div>
+                <div class="section-content">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Task</th>
+                                <th>Frequency</th>
+                                <th>Priority</th>
+                                <th>Est. Time</th>
+                                <th>Pro Required?</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><a class="task-link" data-tab="bathroom" data-task="grout">Clean and inspect grout</a></td>
+                                <td>Monthly</td>
+                                <td><span class="priority priority-low">Low</span></td>
+                                <td>30 min</td>
+                                <td>DIY</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="bathroom" data-task="caulking">Check caulking around tub/shower</a></td>
+                                <td>Semi-Annual</td>
+                                <td><span class="priority priority-medium">Medium</span></td>
+                                <td>15 min</td>
+                                <td>DIY</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="bathroom" data-task="under-sink">Inspect under-sink plumbing</a></td>
+                                <td>Quarterly</td>
+                                <td><span class="priority priority-low">Low</span></td>
+                                <td>10 min</td>
+                                <td>DIY</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- HVAC Section -->
+            <div class="schedule-section hvac">
+                <div class="section-header">HVAC & Climate Control</div>
+                <div class="section-content">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Task</th>
+                                <th>Frequency</th>
+                                <th>Priority</th>
+                                <th>Est. Time</th>
+                                <th>Pro Required?</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><a class="task-link" data-tab="hvac" data-task="air-filter">Replace air filter</a></td>
+                                <td>Every 1-3 months</td>
+                                <td><span class="priority priority-critical">Critical</span></td>
+                                <td>5 min</td>
+                                <td>DIY</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="hvac" data-task="condenser-coils">Clean AC condenser coils</a></td>
+                                <td>Annual</td>
+                                <td><span class="priority priority-medium">Medium</span></td>
+                                <td>45 min</td>
+                                <td>DIY</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="hvac" data-task="hvac-service">Service HVAC system</a></td>
+                                <td>Annual</td>
+                                <td><span class="priority priority-high">High</span></td>
+                                <td>2 hours</td>
+                                <td>Pro</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="hvac" data-task="ductwork">Check and seal ductwork</a></td>
+                                <td>Annual</td>
+                                <td><span class="priority priority-medium">Medium</span></td>
+                                <td>1 hour</td>
+                                <td>DIY or Pro</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="hvac" data-task="condensate-drain">Clean HVAC condensate drain line</a></td>
+                                <td>Quarterly</td>
+                                <td><span class="priority priority-medium">Medium</span></td>
+                                <td>15 min</td>
+                                <td>DIY</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Plumbing Section -->
+            <div class="schedule-section plumbing">
+                <div class="section-header">Plumbing</div>
+                <div class="section-content">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Task</th>
+                                <th>Frequency</th>
+                                <th>Priority</th>
+                                <th>Est. Time</th>
+                                <th>Pro Required?</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><a class="task-link" data-tab="plumbing" data-task="pipe-leaks">Inspect pipes for leaks</a></td>
+                                <td>Quarterly</td>
+                                <td><span class="priority priority-critical">Critical</span></td>
+                                <td>15 min</td>
+                                <td>DIY</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="plumbing" data-task="water-pressure">Test water pressure</a></td>
+                                <td>Semi-Annual</td>
+                                <td><span class="priority priority-medium">Medium</span></td>
+                                <td>10 min</td>
+                                <td>DIY</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="plumbing" data-task="anode-rod">Inspect water heater anode rod</a></td>
+                                <td>Annual</td>
+                                <td><span class="priority priority-high">High</span></td>
+                                <td>30 min</td>
+                                <td>DIY or Pro</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="plumbing" data-task="tp-valve">Test T&P relief valve</a></td>
+                                <td>Annual</td>
+                                <td><span class="priority priority-high">High</span></td>
+                                <td>5 min</td>
+                                <td>DIY</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="plumbing" data-task="flush-water-heater">Flush water heater</a></td>
+                                <td>Annual</td>
+                                <td><span class="priority priority-high">High</span></td>
+                                <td>30 min</td>
+                                <td>DIY</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="plumbing" data-task="aerators">Clean aerators and strainers</a></td>
+                                <td>Quarterly</td>
+                                <td><span class="priority priority-low">Low</span></td>
+                                <td>15 min</td>
+                                <td>DIY</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Electrical Section -->
+            <div class="schedule-section electrical">
+                <div class="section-header">Electrical & Safety</div>
+                <div class="section-content">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Task</th>
+                                <th>Frequency</th>
+                                <th>Priority</th>
+                                <th>Est. Time</th>
+                                <th>Pro Required?</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><a class="task-link" data-tab="electrical" data-task="gfci">Test GFCI outlets</a></td>
+                                <td>Quarterly</td>
+                                <td><span class="priority priority-critical">Critical</span></td>
+                                <td>10 min</td>
+                                <td>DIY</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="electrical" data-task="circuit-breaker">Check circuit breaker</a></td>
+                                <td>Semi-Annual</td>
+                                <td><span class="priority priority-high">High</span></td>
+                                <td>15 min</td>
+                                <td>DIY or Pro</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="electrical" data-task="smoke-detectors">Replace batteries in smoke/CO detectors</a></td>
+                                <td>Semi-Annual</td>
+                                <td><span class="priority priority-medium">Medium</span></td>
+                                <td>10 min</td>
+                                <td>DIY</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="electrical" data-task="wiring">Inspect visible wiring</a></td>
+                                <td>Annual</td>
+                                <td><span class="priority priority-high">High</span></td>
+                                <td>20 min</td>
+                                <td>Pro recommended</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Exterior Section -->
+            <div class="schedule-section exterior">
+                <div class="section-header">Exterior & Roofing</div>
+                <div class="section-content">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Task</th>
+                                <th>Frequency</th>
+                                <th>Priority</th>
+                                <th>Est. Time</th>
+                                <th>Pro Required?</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><a class="task-link" data-tab="exterior" data-task="roof">Inspect roof from ground</a></td>
+                                <td>Annual</td>
+                                <td><span class="priority priority-high">High</span></td>
+                                <td>15 min</td>
+                                <td>DIY</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="exterior" data-task="gutters">Clean gutters and downspouts</a></td>
+                                <td>Twice Annual</td>
+                                <td><span class="priority priority-high">High</span></td>
+                                <td>1-2 hours</td>
+                                <td>DIY or Pro</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="exterior" data-task="exterior-caulking">Inspect exterior caulking</a></td>
+                                <td>Annual</td>
+                                <td><span class="priority priority-medium">Medium</span></td>
+                                <td>30 min</td>
+                                <td>DIY</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="exterior" data-task="window-caulking">Inspect window caulking (int/ext)</a></td>
+                                <td>Annual</td>
+                                <td><span class="priority priority-medium">Medium</span></td>
+                                <td>45 min</td>
+                                <td>DIY</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="exterior" data-task="weatherstripping">Inspect/replace weatherstripping</a></td>
+                                <td>Annual</td>
+                                <td><span class="priority priority-medium">Medium</span></td>
+                                <td>1 hour</td>
+                                <td>DIY</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="exterior" data-task="pest">Pest inspection</a></td>
+                                <td>Semi-Annual</td>
+                                <td><span class="priority priority-medium">Medium</span></td>
+                                <td>30 min</td>
+                                <td>DIY or Pro</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="exterior" data-task="deck">Power wash deck/patio</a></td>
+                                <td>Annual</td>
+                                <td><span class="priority priority-medium">Medium</span></td>
+                                <td>2-3 hours</td>
+                                <td>DIY or Pro</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="exterior" data-task="foundation">Seal cracks in foundation</a></td>
+                                <td>Annual</td>
+                                <td><span class="priority priority-medium">Medium</span></td>
+                                <td>1 hour</td>
+                                <td>DIY or Pro</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="exterior" data-task="grading">Inspect grading around home</a></td>
+                                <td>Annual</td>
+                                <td><span class="priority priority-medium">Medium</span></td>
+                                <td>20 min</td>
+                                <td>DIY</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Landscaping Section -->
+            <div class="schedule-section landscaping">
+                <div class="section-header">Landscaping & Outdoor</div>
+                <div class="section-content">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Task</th>
+                                <th>Frequency</th>
+                                <th>Priority</th>
+                                <th>Est. Time</th>
+                                <th>Pro Required?</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><a class="task-link" data-tab="landscaping" data-task="trees">Trim trees and shrubs</a></td>
+                                <td>Seasonally</td>
+                                <td><span class="priority priority-medium">Medium</span></td>
+                                <td>2-4 hours</td>
+                                <td>DIY or Pro</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="landscaping" data-task="lawn">Aerate and reseed lawn</a></td>
+                                <td>Annual</td>
+                                <td><span class="priority priority-medium">Medium</span></td>
+                                <td>2-3 hours</td>
+                                <td>DIY or Pro</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="landscaping" data-task="outdoor-fixtures">Inspect outdoor fixtures</a></td>
+                                <td>Quarterly</td>
+                                <td><span class="priority priority-low">Low</span></td>
+                                <td>15 min</td>
+                                <td>DIY</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="landscaping" data-task="equipment">Service outdoor equipment</a></td>
+                                <td>Seasonally</td>
+                                <td><span class="priority priority-medium">Medium</span></td>
+                                <td>1-2 hours</td>
+                                <td>DIY or Pro</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="landscaping" data-task="winterize">Winterize outdoor faucets</a></td>
+                                <td>Annual (Fall)</td>
+                                <td><span class="priority priority-critical">Critical</span></td>
+                                <td>30 min</td>
+                                <td>DIY</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="landscaping" data-task="pipe-insulation">Check pipe insulation</a></td>
+                                <td>Annual (Fall)</td>
+                                <td><span class="priority priority-high">High</span></td>
+                                <td>20 min</td>
+                                <td>DIY</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="landscaping" data-task="hoses">Drain and store garden hoses</a></td>
+                                <td>Annual (Fall)</td>
+                                <td><span class="priority priority-medium">Medium</span></td>
+                                <td>15 min</td>
+                                <td>DIY</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="landscaping" data-task="freeze-inspection">Post-winter freeze damage inspection</a></td>
+                                <td>Annual (Spring)</td>
+                                <td><span class="priority priority-high">High</span></td>
+                                <td>45 min</td>
+                                <td>DIY</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Humidity Section -->
+            <div class="schedule-section humidity">
+                <div class="section-header">Humidity & Moisture Control</div>
+                <div class="section-content">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Task</th>
+                                <th>Frequency</th>
+                                <th>Priority</th>
+                                <th>Est. Time</th>
+                                <th>Pro Required?</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><a class="task-link" data-tab="humidity" data-task="dehumidifier">Clean dehumidifier filter</a></td>
+                                <td>Seasonally</td>
+                                <td><span class="priority priority-medium">Medium</span></td>
+                                <td>10 min</td>
+                                <td>DIY</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="humidity" data-task="humidity-monitor">Monitor basement humidity levels</a></td>
+                                <td>Monthly (summer)</td>
+                                <td><span class="priority priority-medium">Medium</span></td>
+                                <td>2 min</td>
+                                <td>DIY</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="humidity" data-task="condensation">Inspect for condensation</a></td>
+                                <td>Seasonally</td>
+                                <td><span class="priority priority-medium">Medium</span></td>
+                                <td>15 min</td>
+                                <td>DIY</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="humidity" data-task="vapor-barrier">Check vapor barriers / moisture coating</a></td>
+                                <td>Annual</td>
+                                <td><span class="priority priority-high">High</span></td>
+                                <td>30 min</td>
+                                <td>DIY or Pro</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Appliances Section -->
+            <div class="schedule-section appliances">
+                <div class="section-header">Appliances</div>
+                <div class="section-content">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Task</th>
+                                <th>Frequency</th>
+                                <th>Priority</th>
+                                <th>Est. Time</th>
+                                <th>Pro Required?</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><a class="task-link" data-tab="appliances" data-task="dishwasher">Clean dishwasher filter</a></td>
+                                <td>Monthly</td>
+                                <td><span class="priority priority-low">Low</span></td>
+                                <td>10 min</td>
+                                <td>DIY</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="appliances" data-task="washing-machine">Inspect washing machine hoses</a></td>
+                                <td>Annual</td>
+                                <td><span class="priority priority-high">High</span></td>
+                                <td>5 min</td>
+                                <td>DIY</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="appliances" data-task="dryer-vent">Clean dryer vent</a></td>
+                                <td>Every 6 months</td>
+                                <td><span class="priority priority-critical">Critical</span></td>
+                                <td>30-60 min</td>
+                                <td>DIY or Pro</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="appliances" data-task="coffee-maker">Descale coffee maker</a></td>
+                                <td>Monthly</td>
+                                <td><span class="priority priority-low">Low</span></td>
+                                <td>30 min</td>
+                                <td>DIY</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- General Section -->
+            <div class="schedule-section general">
+                <div class="section-header">General Maintenance</div>
+                <div class="section-content">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Task</th>
+                                <th>Frequency</th>
+                                <th>Priority</th>
+                                <th>Est. Time</th>
+                                <th>Pro Required?</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><a class="task-link" data-tab="general" data-task="walkthrough">Walk-through inspection</a></td>
+                                <td>Monthly</td>
+                                <td><span class="priority priority-medium">Medium</span></td>
+                                <td>30-60 min</td>
+                                <td>DIY</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="general" data-task="sump-pump">Test sump pump</a></td>
+                                <td>Quarterly</td>
+                                <td><span class="priority priority-medium">Medium</span></td>
+                                <td>10 min</td>
+                                <td>DIY</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="general" data-task="attic">Inspect attic</a></td>
+                                <td>Semi-Annual</td>
+                                <td><span class="priority priority-high">High</span></td>
+                                <td>30 min</td>
+                                <td>DIY</td>
+                            </tr>
+                            <tr>
+                                <td><a class="task-link" data-tab="general" data-task="basement">Check basement</a></td>
+                                <td>Semi-Annual</td>
+                                <td><span class="priority priority-high">High</span></td>
+                                <td>30 min</td>
+                                <td>DIY</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Priority Legend -->
+            <div style="background: white; padding: 20px; border-radius: 10px; margin-top: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                <h3 style="margin-bottom: 15px; color: #2c3e50;">Priority Levels</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                    <div><span class="priority priority-critical">Critical</span> — Safety/prevent damage; do FIRST</div>
+                    <div><span class="priority priority-high">High</span> — Important maintenance; do within 1-2 weeks</div>
+                    <div><span class="priority priority-medium">Medium</span> — Regular upkeep; do within 1-2 months</div>
+                    <div><span class="priority priority-low">Low</span> — Enhancement/comfort; lower urgency</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- GANTT CHART TAB -->
+        <div id="gantt" class="tab-content">
+            <h2 style="margin: 20px 0; color: #2c3e50;">Annual Maintenance Calendar</h2>
+            <div class="gantt-container">
+                <table class="gantt-table">
+                    <thead>
+                        <tr>
+                            <th>Task</th>
+                            <th>Jan</th>
+                            <th>Feb</th>
+                            <th>Mar</th>
+                            <th>Apr</th>
+                            <th>May</th>
+                            <th>Jun</th>
+                            <th>Jul</th>
+                            <th>Aug</th>
+                            <th>Sep</th>
+                            <th>Oct</th>
+                            <th>Nov</th>
+                            <th>Dec</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="gantt-section-row"><td colspan="13">HVAC & Climate Control</td></tr>
+                        <tr>
+                            <td>Replace air filter</td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Service HVAC system</td>
+                            <td></td><td></td><td></td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                            <td></td><td></td><td></td><td></td><td></td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                            <td></td><td></td>
+                        </tr>
+                        <tr>
+                            <td>Clean AC condenser coils</td>
+                            <td></td><td></td><td></td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                            <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+                        </tr>
+                        <tr>
+                            <td>Clean condensate drain</td>
+                            <td></td><td></td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                            <td></td><td></td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                            <td></td><td></td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                            <td></td><td></td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                        </tr>
+                        
+                        <tr class="gantt-section-row"><td colspan="13">Plumbing</td></tr>
+                        <tr>
+                            <td>Inspect pipes for leaks</td>
+                            <td><span class="gantt-dot critical"></span></td>
+                            <td></td><td></td>
+                            <td><span class="gantt-dot critical"></span></td>
+                            <td></td><td></td>
+                            <td><span class="gantt-dot critical"></span></td>
+                            <td></td><td></td>
+                            <td><span class="gantt-dot critical"></span></td>
+                            <td></td><td></td>
+                        </tr>
+                        <tr>
+                            <td>Flush water heater</td>
+                            <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                            <td></td><td></td>
+                        </tr>
+                        <tr>
+                            <td>Test T&P valve / Anode rod</td>
+                            <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                            <td></td><td></td>
+                        </tr>
+                        
+                        <tr class="gantt-section-row"><td colspan="13">Electrical & Safety</td></tr>
+                        <tr>
+                            <td>Test GFCI outlets</td>
+                            <td><span class="gantt-dot critical"></span></td>
+                            <td></td><td></td>
+                            <td><span class="gantt-dot critical"></span></td>
+                            <td></td><td></td>
+                            <td><span class="gantt-dot critical"></span></td>
+                            <td></td><td></td>
+                            <td><span class="gantt-dot critical"></span></td>
+                            <td></td><td></td>
+                        </tr>
+                        <tr>
+                            <td>Smoke/CO detector batteries</td>
+                            <td></td><td></td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                            <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                            <td></td>
+                        </tr>
+                        
+                        <tr class="gantt-section-row"><td colspan="13">Exterior & Roofing</td></tr>
+                        <tr>
+                            <td>Clean gutters</td>
+                            <td></td><td></td><td></td><td></td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                            <td></td><td></td><td></td><td></td><td></td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>Inspect roof</td>
+                            <td></td><td></td><td></td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                            <td></td><td></td><td></td><td></td><td></td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                            <td></td><td></td>
+                        </tr>
+                        <tr>
+                            <td>Pest inspection</td>
+                            <td></td><td></td><td></td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                            <td></td><td></td><td></td><td></td><td></td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                            <td></td><td></td>
+                        </tr>
+                        
+                        <tr class="gantt-section-row"><td colspan="13">Missouri Seasonal</td></tr>
+                        <tr>
+                            <td>Winterize outdoor faucets</td>
+                            <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+                            <td><span class="gantt-dot critical"></span></td>
+                            <td><span class="gantt-dot critical"></span></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>Post-winter inspection</td>
+                            <td></td><td></td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                            <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+                        </tr>
+                        
+                        <tr class="gantt-section-row"><td colspan="13">Appliances</td></tr>
+                        <tr>
+                            <td>Clean dryer vent</td>
+                            <td></td><td></td><td></td>
+                            <td><span class="gantt-dot critical"></span></td>
+                            <td></td><td></td><td></td><td></td><td></td>
+                            <td><span class="gantt-dot critical"></span></td>
+                            <td></td><td></td>
+                        </tr>
+                        
+                        <tr class="gantt-section-row"><td colspan="13">General</td></tr>
+                        <tr>
+                            <td>Inspect attic</td>
+                            <td></td><td></td><td></td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                            <td></td><td></td><td></td><td></td><td></td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                            <td></td><td></td>
+                        </tr>
+                        <tr>
+                            <td>Check basement</td>
+                            <td></td><td></td><td></td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                            <td></td><td></td><td></td><td></td><td></td>
+                            <td><span class="gantt-dot scheduled"></span></td>
+                            <td></td><td></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="legend">
+                    <div class="legend-item">
+                        <span class="gantt-dot scheduled"></span>
+                        <span>Scheduled Task</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="gantt-dot critical"></span>
+                        <span>Critical/Safety Task</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- KITCHEN DETAIL TAB -->
+        <div id="kitchen" class="tab-content">
+            <a href="#" class="back-link" data-tab="schedule">Back to Schedule</a>
+            <div class="detail-section">
+                <h2>🍳 Kitchen Maintenance Guide</h2>
+                
+                <div class="task-detail" id="refrigerator-coils">
+                    <h3>Clean Refrigerator Coils</h3>
+                    <div class="task-meta">
+                        <div class="meta-item">
+                            <strong>Tools Needed</strong>
+                            Vacuum with brush attachment, coil brush, flashlight
+                        </div>
+                        <div class="meta-item safety">
+                            <strong>⚠️ Safety</strong>
+                            Unplug refrigerator before cleaning
+                        </div>
+                    </div>
+                    <div class="steps-list">
+                        <h4>Step-by-Step Instructions</h4>
+                        <ol>
+                            <li>Unplug the refrigerator from the wall outlet</li>
+                            <li>Locate the coils - usually on the back or underneath (behind a kick plate)</li>
+                            <li>If underneath, remove the kick plate/grille at the bottom front</li>
+                            <li>Use a flashlight to see the coils clearly</li>
+                            <li>Use a coil brush to gently loosen dust and debris from the coils</li>
+                            <li>Vacuum up loosened debris with brush attachment</li>
+                            <li>Replace kick plate if applicable</li>
+                            <li>Plug refrigerator back in</li>
+                            <li>Check that it's cooling properly after 30 minutes</li>
+                        </ol>
+                    </div>
+                    <div class="tips-box">
+                        <strong>💡 Tips</strong>
+                        Dirty coils make the compressor work harder, increasing energy bills and shortening appliance life. Pet owners may need to clean more frequently.
+                    </div>
+                </div>
+                
+                <div class="task-detail" id="garbage-disposal">
+                    <h3>Clean Garbage Disposal</h3>
+                    <div class="task-meta">
+                        <div class="meta-item">
+                            <strong>Tools Needed</strong>
+                            Ice cubes, coarse salt or baking soda, lemon/lime, dish soap
+                        </div>
+                        <div class="meta-item safety">
+                            <strong>⚠️ Safety</strong>
+                            NEVER put hands in disposal; always turn off before cleaning
+                        </div>
+                    </div>
+                    <div class="steps-list">
+                        <h4>Step-by-Step Instructions</h4>
+                        <ol>
+                            <li>Run cold water and turn on disposal to clear any debris</li>
+                            <li>Turn off disposal and plug the drain</li>
+                            <li>Fill sink with 3-4 inches of warm soapy water</li>
+                            <li>Unplug drain and turn on disposal to flush with soapy water</li>
+                            <li>Drop 2 cups of ice cubes and 1 cup coarse salt into disposal</li>
+                            <li>Run cold water and turn on disposal until ice is gone (cleans blades)</li>
+                            <li>Cut a lemon or lime into quarters and feed through disposal</li>
+                            <li>Run cold water for 30 seconds after grinding citrus</li>
+                            <li>Clean the rubber splash guard with a brush and soapy water</li>
+                        </ol>
+                    </div>
+                    <div class="tips-box">
+                        <strong>💡 Tips</strong>
+                        Always run cold water when using disposal. Never put fibrous foods (celery, corn husks), grease, or expandable foods (pasta, rice) down the disposal.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- BATHROOM DETAIL TAB -->
+        <div id="bathroom" class="tab-content">
+            <a href="#" class="back-link" data-tab="schedule">Back to Schedule</a>
+            <div class="detail-section">
+                <h2>🚿 Bathroom Maintenance Guide</h2>
+                
+                <div class="task-detail" id="grout">
+                    <h3>Clean and Inspect Grout</h3>
+                    <div class="task-meta">
+                        <div class="meta-item">
+                            <strong>Tools Needed</strong>
+                            Grout brush or old toothbrush, spray bottle, baking soda, vinegar or hydrogen peroxide, clean cloths
+                        </div>
+                        <div class="meta-item safety">
+                            <strong>⚠️ Safety</strong>
+                            Ensure good ventilation when using cleaning products
+                        </div>
+                    </div>
+                    <div class="steps-list">
+                        <h4>Step-by-Step Instructions</h4>
+                        <ol>
+                            <li>Mix cleaning solution: paste of baking soda and water, or equal parts vinegar and water</li>
+                            <li>Apply solution to grout lines</li>
+                            <li>Let sit for 5-10 minutes (longer for stubborn stains)</li>
+                            <li>Scrub grout lines with grout brush using circular motions</li>
+                            <li>Rinse with clean water and wipe dry</li>
+                            <li>INSPECT: Look for cracked, crumbling, or missing grout</li>
+                            <li>INSPECT: Check for dark spots that may indicate mold beneath surface</li>
+                            <li>INSPECT: Look for grout that has separated from tiles</li>
+                            <li>Note any areas needing repair in your maintenance log</li>
+                        </ol>
+                    </div>
+                    <div class="tips-box">
+                        <strong>💡 Tips</strong>
+                        Never use bleach on colored grout. If grout is severely damaged, it may need professional re-grouting. Seal grout annually to prevent staining and water penetration.
+                    </div>
+                </div>
+                
+                <div class="task-detail" id="caulking">
+                    <h3>Check Caulking Around Tub/Shower</h3>
+                    <div class="task-meta">
+                        <div class="meta-item">
+                            <strong>Tools Needed</strong>
+                            Flashlight, putty knife (for removal), caulk gun, silicone caulk, painter's tape, caulk smoothing tool
+                        </div>
+                        <div class="meta-item safety">
+                            <strong>⚠️ Safety</strong>
+                            Ensure good ventilation when applying new caulk
+                        </div>
+                    </div>
+                    <div class="steps-list">
+                        <h4>Step-by-Step Instructions</h4>
+                        <ol>
+                            <li>Inspect all caulk lines where tub/shower meets walls and floor</li>
+                            <li>Look for: cracks, peeling, discoloration, gaps, mold/mildew</li>
+                            <li>Press caulk gently - it should be firm and flexible, not hard or spongy</li>
+                            <li>Check corners especially carefully - they fail first</li>
+                            <li>Run water and watch for any seepage behind caulk</li>
+                            <li><strong>IF RECAULKING NEEDED:</strong></li>
+                            <li>Remove old caulk completely with putty knife</li>
+                            <li>Clean surface with rubbing alcohol, let dry completely</li>
+                            <li>Apply painter's tape on both sides for clean lines</li>
+                            <li>Apply new silicone caulk in steady bead</li>
+                            <li>Smooth with wet finger or tool within 5 minutes</li>
+                            <li>Remove tape immediately, let cure 24 hours before water contact</li>
+                        </ol>
+                    </div>
+                    <div class="tips-box">
+                        <strong>💡 Tips</strong>
+                        Always use 100% silicone caulk for wet areas - it's waterproof and flexible. Failed caulk can lead to hidden water damage and mold in walls.
+                    </div>
+                </div>
+                
+                <div class="task-detail" id="under-sink">
+                    <h3>Inspect Under-Sink Plumbing</h3>
+                    <div class="task-meta">
+                        <div class="meta-item">
+                            <strong>Tools Needed</strong>
+                            Flashlight, paper towels or tissue, bucket
+                        </div>
+                        <div class="meta-item safety">
+                            <strong>⚠️ Safety</strong>
+                            Be careful of sharp edges on pipes
+                        </div>
+                    </div>
+                    <div class="steps-list">
+                        <h4>Step-by-Step Instructions</h4>
+                        <ol>
+                            <li>Clear out items stored under the sink</li>
+                            <li>Use flashlight to examine all visible pipes and connections</li>
+                            <li>Look for: water stains, mineral deposits, rust, corrosion</li>
+                            <li>Check P-trap (curved pipe) for leaks or buildup</li>
+                            <li>Wrap tissue around each joint and connection</li>
+                            <li>Run water for 30 seconds while watching for dampness on tissue</li>
+                            <li>Check supply line connections at shut-off valves</li>
+                            <li>Look at cabinet floor for water damage, warping, or mold</li>
+                            <li>Verify shut-off valves turn freely (don't force if stuck)</li>
+                            <li>Note any issues found for repair</li>
+                        </ol>
+                    </div>
+                    <div class="tips-box">
+                        <strong>💡 Tips</strong>
+                        Catching small leaks early prevents major water damage. If valves are stuck, don't force them - call a plumber to replace before an emergency.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- HVAC DETAIL TAB -->
+        <div id="hvac" class="tab-content">
+            <a href="#" class="back-link" data-tab="schedule">Back to Schedule</a>
+            <div class="detail-section">
+                <h2>❄️ HVAC & Climate Control Maintenance Guide</h2>
+                
+                <div class="task-detail" id="air-filter">
+                    <h3>Replace Air Filter</h3>
+                    <div class="task-meta">
+                        <div class="meta-item">
+                            <strong>Tools Needed</strong>
+                            New filter (correct size), step stool if needed
+                        </div>
+                        <div class="meta-item safety">
+                            <strong>⚠️ Safety</strong>
+                            Turn off HVAC system before replacing filter
+                        </div>
+                    </div>
+                    <div class="steps-list">
+                        <h4>Step-by-Step Instructions</h4>
+                        <ol>
+                            <li>Locate your air filter (common locations: return air vent, air handler, furnace)</li>
+                            <li>Note the size printed on the current filter frame (e.g., 16x25x1)</li>
+                            <li>Turn off HVAC system at thermostat</li>
+                            <li>Remove the old filter - note the airflow direction arrow</li>
+                            <li>Check old filter condition (light test: hold to light, if you can't see through, it's dirty)</li>
+                            <li>Insert new filter with airflow arrow pointing toward the unit/ductwork</li>
+                            <li>Ensure filter fits snugly with no gaps around edges</li>
+                            <li>Close filter access door/grille securely</li>
+                            <li>Turn HVAC system back on</li>
+                            <li>Write the date on the filter edge for tracking</li>
+                        </ol>
+                    </div>
+                    <div class="tips-box">
+                        <strong>💡 Tips</strong>
+                        Higher MERV ratings filter more particles but restrict airflow - check your system's recommendations. During high-use seasons or with pets, check monthly.
+                    </div>
+                </div>
+                
+                <div class="task-detail" id="condenser-coils">
+                    <h3>Clean AC Condenser Coils</h3>
+                    <div class="task-meta">
+                        <div class="meta-item">
+                            <strong>Tools Needed</strong>
+                            Garden hose with spray nozzle, coil cleaner (optional), fin comb, work gloves, screwdriver
+                        </div>
+                        <div class="meta-item safety">
+                            <strong>⚠️ Safety</strong>
+                            Turn off power at disconnect box AND breaker before cleaning
+                        </div>
+                    </div>
+                    <div class="steps-list">
+                        <h4>Step-by-Step Instructions</h4>
+                        <ol>
+                            <li>Turn off AC at thermostat</li>
+                            <li>Locate outdoor disconnect box (usually near unit) and switch off</li>
+                            <li>Also turn off breaker for AC at main panel for extra safety</li>
+                            <li>Remove any debris (leaves, twigs) from around and on top of unit</li>
+                            <li>Clear vegetation - maintain 2 feet clearance on all sides</li>
+                            <li>Remove fan grille/top if needed (some units require this)</li>
+                            <li>Spray coils from inside out with garden hose (moderate pressure)</li>
+                            <li>For heavy buildup, apply coil cleaner per product instructions</li>
+                            <li>Use fin comb to straighten any bent fins (they block airflow)</li>
+                            <li>Reassemble unit, restore power at disconnect and breaker</li>
+                            <li>Wait 24 hours before running AC (lets pressure equalize)</li>
+                        </ol>
+                    </div>
+                    <div class="tips-box">
+                        <strong>💡 Tips</strong>
+                        Do this in spring before cooling season. Never use a pressure washer - it damages fins. A clean condenser improves efficiency and extends compressor life.
+                    </div>
+                </div>
+                
+                <div class="task-detail" id="hvac-service">
+                    <h3>Service HVAC System</h3>
+                    <div class="task-meta">
+                        <div class="meta-item">
+                            <strong>Tools Needed</strong>
+                            Phone to schedule appointment, maintenance records
+                        </div>
+                        <div class="meta-item safety">
+                            <strong>⚠️ Safety</strong>
+                            Professional service - ensure they are licensed and insured
+                        </div>
+                    </div>
+                    <div class="steps-list">
+                        <h4>Step-by-Step Instructions</h4>
+                        <ol>
+                            <li>Schedule professional maintenance (spring for AC, fall for heating)</li>
+                            <li>Before technician arrives, note any issues: strange noises, odors, uneven heating/cooling</li>
+                            <li>Ensure clear access to indoor and outdoor units</li>
+                            <li><strong>TECHNICIAN SHOULD CHECK:</strong></li>
+                            <li>Refrigerant levels and check for leaks</li>
+                            <li>Electrical connections and voltage</li>
+                            <li>Thermostat calibration</li>
+                            <li>Condensate drain</li>
+                            <li>Blower motor and belt</li>
+                            <li>Heat exchanger (heating) or evaporator coil (cooling)</li>
+                            <li>Safety controls</li>
+                            <li>Ask technician about system condition and remaining lifespan</li>
+                            <li>Get itemized invoice and keep for records</li>
+                        </ol>
+                    </div>
+                    <div class="tips-box">
+                        <strong>💡 Tips</strong>
+                        Many HVAC companies offer maintenance plans that include priority service and discounts. Keep all service records - helpful when selling home or for warranty claims.
+                    </div>
+                </div>
+                
+                <div class="task-detail" id="ductwork">
+                    <h3>Check and Seal Ductwork</h3>
+                    <div class="task-meta">
+                        <div class="meta-item">
+                            <strong>Tools Needed</strong>
+                            Flashlight, incense stick or tissue, mastic sealant or metal tape (NOT duct tape), work gloves
+                        </div>
+                        <div class="meta-item safety">
+                            <strong>⚠️ Safety</strong>
+                            Be careful in attic/crawlspace - watch for insulation, nails, limited headroom
+                        </div>
+                    </div>
+                    <div class="steps-list">
+                        <h4>Step-by-Step Instructions</h4>
+                        <ol>
+                            <li>Turn on HVAC fan (set thermostat to "fan on")</li>
+                            <li>Access visible ductwork in basement, attic, or crawlspace</li>
+                            <li>Use flashlight to inspect all joints and connections</li>
+                            <li>Hold tissue or lit incense near joints - movement indicates leaks</li>
+                            <li>Check for: disconnected sections, holes, crushed flexible ducts</li>
+                            <li>Look for dark streaks at joints (dust accumulation = air leak)</li>
+                            <li>TO SEAL: Clean dusty surfaces first</li>
+                            <li>Apply mastic sealant with brush or gloved hand to joints</li>
+                            <li>For larger gaps, use metal tape first, then mastic over it</li>
+                            <li>Check that flexible ducts aren't kinked or compressed</li>
+                            <li>Ensure all duct boots (where ducts meet vents) are sealed to floor/ceiling</li>
+                        </ol>
+                    </div>
+                    <div class="tips-box">
+                        <strong>💡 Tips</strong>
+                        Leaky ducts can waste 20-30% of heated/cooled air. Never use cloth "duct tape" - it fails quickly. Mastic sealant is permanent and flexible.
+                    </div>
+                </div>
+                
+                <div class="task-detail" id="condensate-drain">
+                    <h3>Clean HVAC Condensate Drain Line</h3>
+                    <div class="task-meta">
+                        <div class="meta-item">
+                            <strong>Tools Needed</strong>
+                            Distilled white vinegar, funnel, wet/dry vacuum (optional), pipe cleaner or small brush
+                        </div>
+                        <div class="meta-item safety">
+                            <strong>⚠️ Safety</strong>
+                            Turn off HVAC system before cleaning
+                        </div>
+                    </div>
+                    <div class="steps-list">
+                        <h4>Step-by-Step Instructions</h4>
+                        <ol>
+                            <li>Turn off HVAC system at thermostat</li>
+                            <li>Locate the condensate drain line (PVC pipe near indoor air handler)</li>
+                            <li>Find the access point - usually a T-shaped vent with removable cap</li>
+                            <li>Remove the cap from the access point</li>
+                            <li>Pour 1 cup distilled white vinegar into the drain line</li>
+                            <li>Let sit for 30 minutes (kills algae and mold)</li>
+                            <li>Flush with 1 cup warm water</li>
+                            <li>Outside, locate where drain exits (usually near outdoor unit)</li>
+                            <li>Verify water flows freely from exit point</li>
+                            <li>If clogged: use wet/dry vac at outdoor exit to suction out blockage</li>
+                            <li>Replace access cap securely</li>
+                            <li>Turn system back on</li>
+                        </ol>
+                    </div>
+                    <div class="tips-box">
+                        <strong>💡 Tips</strong>
+                        A clogged condensate line can cause water damage and trigger system shutdown. Some newer systems have safety switches that turn off AC if line is clogged.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- PLUMBING DETAIL TAB -->
+        <div id="plumbing" class="tab-content">
+            <a href="#" class="back-link" data-tab="schedule">Back to Schedule</a>
+            <div class="detail-section">
+                <h2>🔧 Plumbing Maintenance Guide</h2>
+                
+                <div class="task-detail" id="pipe-leaks">
+                    <h3>Inspect Pipes for Leaks</h3>
+                    <div class="task-meta">
+                        <div class="meta-item">
+                            <strong>Tools Needed</strong>
+                            Flashlight, paper towels or tissue, mirror (for hard-to-see areas)
+                        </div>
+                        <div class="meta-item safety">
+                            <strong>⚠️ Safety</strong>
+                            Be careful of hot water pipes; know location of main water shut-off
+                        </div>
+                    </div>
+                    <div class="steps-list">
+                        <h4>Step-by-Step Instructions</h4>
+                        <ol>
+                            <li>Check under all sinks (kitchen, bathrooms, utility)</li>
+                            <li>Examine exposed pipes in basement/utility areas</li>
+                            <li>Look for: drips, water stains, mineral deposits (white/green buildup), rust</li>
+                            <li>Wrap tissue around joints and connections, run water, check for dampness</li>
+                            <li>Check water heater connections and surrounding floor</li>
+                            <li>Look at washing machine supply hoses and connections</li>
+                            <li>Inspect toilet supply lines and base (look for water on floor)</li>
+                            <li>Check outdoor hose bibs for drips</li>
+                            <li>Listen for running water when no fixtures are in use (indicates hidden leak)</li>
+                            <li>Note your water meter reading, don't use water for 2 hours, check if meter moved</li>
+                        </ol>
+                    </div>
+                    <div class="tips-box">
+                        <strong>💡 Tips</strong>
+                        Even small leaks waste thousands of gallons yearly and can cause major damage. A drip every second wastes over 3,000 gallons per year.
+                    </div>
+                </div>
+                
+                <div class="task-detail" id="water-pressure">
+                    <h3>Test Water Pressure</h3>
+                    <div class="task-meta">
+                        <div class="meta-item">
+                            <strong>Tools Needed</strong>
+                            Water pressure gauge (attaches to hose bib), notepad
+                        </div>
+                        <div class="meta-item safety">
+                            <strong>⚠️ Safety</strong>
+                            No special safety concerns
+                        </div>
+                    </div>
+                    <div class="steps-list">
+                        <h4>Step-by-Step Instructions</h4>
+                        <ol>
+                            <li>Purchase or borrow a water pressure gauge ($10-15 at hardware stores)</li>
+                            <li>Turn off all water-using appliances (dishwasher, washing machine, ice maker)</li>
+                            <li>Make sure no faucets or toilets are running</li>
+                            <li>Attach gauge to an outdoor hose bib or laundry faucet</li>
+                            <li>Open the faucet fully</li>
+                            <li>Read the pressure on the gauge</li>
+                            <li>Normal range: 40-60 PSI (ideal is 50 PSI)</li>
+                            <li>Below 40 PSI: May indicate supply issues or clogged pipes</li>
+                            <li>Above 80 PSI: Too high - can damage fixtures and pipes</li>
+                            <li>If pressure is too high, consider installing a pressure reducing valve (PRV)</li>
+                        </ol>
+                    </div>
+                    <div class="tips-box">
+                        <strong>💡 Tips</strong>
+                        High water pressure is hard on pipes, fittings, and appliances. If you hear banging pipes (water hammer), pressure may be too high.
+                    </div>
+                </div>
+                
+                <div class="task-detail" id="anode-rod">
+                    <h3>Inspect Water Heater Anode Rod</h3>
+                    <div class="task-meta">
+                        <div class="meta-item">
+                            <strong>Tools Needed</strong>
+                            1-1/16" socket wrench, pipe wrench, Teflon tape, new anode rod (if needed), garden hose
+                        </div>
+                        <div class="meta-item safety">
+                            <strong>⚠️ Safety</strong>
+                            Turn off power (electric) or gas before working; water will be hot
+                        </div>
+                    </div>
+                    <div class="steps-list">
+                        <h4>Step-by-Step Instructions</h4>
+                        <ol>
+                            <li>Turn off power to electric water heater OR set gas to "pilot"</li>
+                            <li>Turn off cold water supply to tank</li>
+                            <li>Open a hot water faucet somewhere in the house (relieves pressure)</li>
+                            <li>Locate anode rod - usually on top of tank (may be hidden under insulation/cap)</li>
+                            <li>Use socket wrench to loosen the rod (may require significant force)</li>
+                            <li>Pull rod out slowly - watch for water drips</li>
+                            <li>Inspect rod: If less than 1/2" thick or coated with calcium, replace it</li>
+                            <li>If rod is mostly gone (just wire core visible), replace immediately</li>
+                            <li>Wrap new rod threads with Teflon tape</li>
+                            <li>Install new rod, tighten securely</li>
+                            <li>Turn water back on, check for leaks at rod</li>
+                            <li>Restore power/gas</li>
+                        </ol>
+                    </div>
+                    <div class="tips-box">
+                        <strong>💡 Tips</strong>
+                        The anode rod sacrifices itself to protect your tank from corrosion. Checking it annually can double your water heater's lifespan. A corroded rod means tank damage may be starting.
+                    </div>
+                </div>
+                
+                <div class="task-detail" id="tp-valve">
+                    <h3>Test T&P Relief Valve</h3>
+                    <div class="task-meta">
+                        <div class="meta-item">
+                            <strong>Tools Needed</strong>
+                            Bucket, towel
+                        </div>
+                        <div class="meta-item safety">
+                            <strong>⚠️ Safety</strong>
+                            Water released will be very hot - keep hands and body clear; wear closed-toe shoes
+                        </div>
+                    </div>
+                    <div class="steps-list">
+                        <h4>Step-by-Step Instructions</h4>
+                        <ol>
+                            <li>Locate the T&P (Temperature & Pressure) valve on side or top of water heater</li>
+                            <li>There should be a discharge pipe running down from the valve</li>
+                            <li>Place bucket at end of discharge pipe (or be ready with towel if pipe exits outside)</li>
+                            <li>CAREFULLY lift the lever on the valve for 2-3 seconds</li>
+                            <li>You should hear water rush and see it discharge from the pipe</li>
+                            <li>Release lever - water should stop immediately</li>
+                            <li>If valve doesn't release water, it may be stuck/failed - needs replacement</li>
+                            <li>If valve continues to drip after release, it may need replacement</li>
+                            <li>If valve has never been tested and tank is old, consider having plumber do this</li>
+                            <li>Note condition in maintenance log</li>
+                        </ol>
+                    </div>
+                    <div class="tips-box">
+                        <strong>💡 Tips</strong>
+                        The T&P valve is a critical safety device - it prevents tank explosion from overpressure. If your valve fails the test, replace it promptly. This is a $20 part that prevents catastrophic failure.
+                    </div>
+                </div>
+                
+                <div class="task-detail" id="flush-water-heater">
+                    <h3>Flush Water Heater</h3>
+                    <div class="task-meta">
+                        <div class="meta-item">
+                            <strong>Tools Needed</strong>
+                            Garden hose, bucket, flathead screwdriver, work gloves
+                        </div>
+                        <div class="meta-item safety">
+                            <strong>⚠️ Safety</strong>
+                            Water will be very hot - wear gloves, closed shoes; be careful of splashing
+                        </div>
+                    </div>
+                    <div class="steps-list">
+                        <h4>Step-by-Step Instructions</h4>
+                        <ol>
+                            <li>Turn off power (electric) or set gas to "pilot" mode</li>
+                            <li>Turn off cold water supply valve to tank</li>
+                            <li>Let tank cool for a few hours OR proceed carefully with hot water</li>
+                            <li>Attach garden hose to drain valve at bottom of tank</li>
+                            <li>Run hose to floor drain, outside, or into buckets</li>
+                            <li>Open a hot water faucet in the house (allows air in for drainage)</li>
+                            <li>Open the drain valve (may need screwdriver)</li>
+                            <li>Let water drain - first water will likely be rusty/sediment-filled</li>
+                            <li>When flow slows, briefly open cold supply to stir up remaining sediment</li>
+                            <li>Continue until water runs clear</li>
+                            <li>Close drain valve, remove hose</li>
+                            <li>Close hot water faucet in house</li>
+                            <li>Turn on cold supply, let tank fill completely</li>
+                            <li>Open hot faucet to release air, wait for steady stream</li>
+                            <li>Restore power/gas</li>
+                        </ol>
+                    </div>
+                    <div class="tips-box">
+                        <strong>💡 Tips</strong>
+                        Sediment buildup reduces efficiency and can damage the tank bottom. Annual flushing is especially important with hard water. If drain valve won't close afterward, it may need replacement.
+                    </div>
+                </div>
+                
+                <div class="task-detail" id="aerators">
+                    <h3>Clean Aerators and Strainers</h3>
+                    <div class="task-meta">
+                        <div class="meta-item">
+                            <strong>Tools Needed</strong>
+                            Pliers or wrench (with cloth for protection), old toothbrush, white vinegar, small bowl
+                        </div>
+                        <div class="meta-item safety">
+                            <strong>⚠️ Safety</strong>
+                            No special safety concerns
+                        </div>
+                    </div>
+                    <div class="steps-list">
+                        <h4>Step-by-Step Instructions</h4>
+                        <ol>
+                            <li>Identify aerators on faucet tips (kitchen, bathroom sinks)</li>
+                            <li>Unscrew aerator by hand or with cloth-wrapped pliers (turn counterclockwise)</li>
+                            <li>Note the order of internal parts as you disassemble</li>
+                            <li>Remove any visible debris from screens</li>
+                            <li>Soak parts in white vinegar for 30 minutes to dissolve mineral deposits</li>
+                            <li>Scrub screens gently with toothbrush</li>
+                            <li>Rinse all parts thoroughly</li>
+                            <li>Reassemble in correct order (screens, flow restrictor, housing)</li>
+                            <li>Screw aerator back on hand-tight</li>
+                            <li>Turn on water to test - flow should be even and splash-free</li>
+                            <li>Also clean showerhead by soaking in vinegar (or bag of vinegar tied around head)</li>
+                        </ol>
+                    </div>
+                    <div class="tips-box">
+                        <strong>💡 Tips</strong>
+                        Clogged aerators reduce water pressure at specific fixtures. If one faucet has low flow but others don't, the aerator is likely the culprit. Replace aerators if screens are damaged.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Remaining tabs follow the same pattern - abbreviated for length -->
+        <div id="electrical" class="tab-content">
+            <a href="#" class="back-link" data-tab="schedule">Back to Schedule</a>
+            <div class="detail-section">
+                <h2>⚡ Electrical & Safety Maintenance Guide</h2>
+                
+                <div class="task-detail" id="gfci">
+                    <h3>Test GFCI Outlets</h3>
+                    <div class="task-meta">
+                        <div class="meta-item"><strong>Tools Needed</strong>GFCI outlet tester ($15) or small lamp/phone charger</div>
+                        <div class="meta-item safety"><strong>⚠️ Safety</strong>Never test with wet hands; don't touch internal components</div>
+                    </div>
+                    <div class="steps-list">
+                        <h4>Step-by-Step Instructions</h4>
+                        <ol>
+                            <li>Locate all GFCI outlets (have TEST and RESET buttons) - typically in bathrooms, kitchen, garage, outdoors, basement</li>
+                            <li>Plug in a lamp or outlet tester</li>
+                            <li>Press the TEST button on the outlet</li>
+                            <li>The RESET button should pop out and power should cut off (lamp turns off)</li>
+                            <li>If using tester, it will indicate if wiring is correct</li>
+                            <li>Press RESET button - it should click and restore power</li>
+                            <li>Verify the device works again</li>
+                            <li>If outlet doesn't trip when tested, it needs replacement</li>
+                            <li>If outlet won't reset, check if another GFCI upstream has tripped</li>
+                            <li>Note: One GFCI can protect multiple "downstream" regular outlets</li>
+                            <li>Test each GFCI outlet in your home - they can go bad</li>
+                        </ol>
+                    </div>
+                    <div class="tips-box"><strong>💡 Tips</strong>GFCIs protect against electrical shock in wet areas. They should trip instantly when tested. If a GFCI is more than 10 years old, consider replacing it. Test monthly for safety.</div>
+                </div>
+                
+                <div class="task-detail" id="circuit-breaker">
+                    <h3>Check Circuit Breaker</h3>
+                    <div class="task-meta">
+                        <div class="meta-item"><strong>Tools Needed</strong>Flashlight, notepad, non-contact voltage tester (optional)</div>
+                        <div class="meta-item safety"><strong>⚠️ Safety</strong>Never touch bus bars inside panel; keep panel door closed when not inspecting</div>
+                    </div>
+                    <div class="steps-list">
+                        <h4>Step-by-Step Instructions</h4>
+                        <ol>
+                            <li>Locate your main electrical panel (breaker box)</li>
+                            <li>Open the panel door (outer cover only - don't remove inner cover)</li>
+                            <li>Check that all breakers are firmly in ON position (not tripped)</li>
+                            <li>Look for any breakers that feel loose or won't stay in position</li>
+                            <li>Note any signs of heat damage: discoloration, melting, burn marks</li>
+                            <li>Sniff for burning odors (indicates serious problem)</li>
+                            <li>Listen for buzzing or crackling sounds (call electrician if heard)</li>
+                            <li>Verify panel directory is accurate and legible (label circuits if not)</li>
+                            <li>Check for any corrosion, especially in humid areas</li>
+                            <li>Ensure 3-foot clearance in front of panel (code requirement)</li>
+                            <li>Test each breaker by switching off and on - should move smoothly</li>
+                            <li>IF YOU NOTICE ANY DAMAGE: Stop, close panel, call licensed electrician</li>
+                        </ol>
+                    </div>
+                    <div class="tips-box"><strong>💡 Tips</strong>A breaker that trips repeatedly indicates an overloaded circuit or wiring problem - don't just keep resetting it. Panels over 25 years old may need professional inspection.</div>
+                </div>
+                
+                <div class="task-detail" id="smoke-detectors">
+                    <h3>Replace Batteries in Smoke/CO Detectors</h3>
+                    <div class="task-meta">
+                        <div class="meta-item"><strong>Tools Needed</strong>Step ladder, new 9V batteries (or AA depending on model), vacuum with brush attachment</div>
+                        <div class="meta-item safety"><strong>⚠️ Safety</strong>Use stable ladder; be careful on ceiling-mounted units</div>
+                    </div>
+                    <div class="steps-list">
+                        <h4>Step-by-Step Instructions</h4>
+                        <ol>
+                            <li>Test detector first by pressing test button - note if alarm sounds weak</li>
+                            <li>Twist detector counterclockwise to remove from base (or slide/unclip)</li>
+                            <li>Open battery compartment</li>
+                            <li>Note battery type and orientation before removing</li>
+                            <li>Insert fresh batteries matching correct orientation (+/-)</li>
+                            <li>Close compartment securely</li>
+                            <li>Use vacuum brush attachment to clean vents/openings (dust causes false alarms)</li>
+                            <li>Remount detector securely to base</li>
+                            <li>Press test button - alarm should sound loud and clear</li>
+                            <li>Check manufacture date on back - replace entire unit if over 10 years old</li>
+                            <li>Ensure you have detectors: every bedroom, outside sleeping areas, every level</li>
+                            <li>CO detectors required near bedrooms and fuel-burning appliances</li>
+                        </ol>
+                    </div>
+                    <div class="tips-box"><strong>💡 Tips</strong>Change batteries when clocks change (daylight saving). "Chirping" means low battery - don't ignore it. Smoke detectors over 10 years old lose sensitivity and should be replaced entirely.</div>
+                </div>
+                
+                <div class="task-detail" id="wiring">
+                    <h3>Inspect Visible Wiring</h3>
+                    <div class="task-meta">
+                        <div class="meta-item"><strong>Tools Needed</strong>Flashlight, notepad, phone for photos</div>
+                        <div class="meta-item safety"><strong>⚠️ Safety</strong>Never touch exposed wires; if you see damage, call electrician - don't attempt repair</div>
+                    </div>
+                    <div class="steps-list">
+                        <h4>Step-by-Step Instructions</h4>
+                        <ol>
+                            <li>Check exposed wiring in basement, attic, garage</li>
+                            <li>Look for: frayed insulation, exposed copper, chew marks (rodents)</li>
+                            <li>Examine where wires enter junction boxes - insulation should be intact</li>
+                            <li>Check for wires that are pinched, stretched, or hanging loose</li>
+                            <li>Look for old knob-and-tube wiring (ceramic insulators) - may need upgrade</li>
+                            <li>Inspect extension cords - these should be temporary, not permanent</li>
+                            <li>Check for overloaded outlets (multiple power strips daisy-chained)</li>
+                            <li>Look at outlet and switch covers - cracks or discoloration indicate heat</li>
+                            <li>Feel outlets and switches - warmth indicates potential problem</li>
+                            <li>Note any outlets that don't work or work intermittently</li>
+                            <li>Check outdoor wiring for weather damage</li>
+                            <li>Document any concerns with photos for electrician consultation</li>
+                        </ol>
+                    </div>
+                    <div class="tips-box"><strong>💡 Tips</strong>Electrical problems cause thousands of house fires yearly. Never ignore warning signs. Older homes may have outdated wiring that's inadequate for modern electrical loads.</div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="exterior" class="tab-content">
+            <a href="#" class="back-link" data-tab="schedule">Back to Schedule</a>
+            <div class="detail-section">
+                <h2>🏡 Exterior & Roofing Maintenance Guide</h2>
+                <p style="margin-bottom: 20px; color: #666;">Detailed instructions for roof inspection, gutters, caulking, weatherstripping, pest inspection, deck care, foundation, and grading.</p>
+                
+                <div class="task-detail" id="roof">
+                    <h3>Inspect Roof from Ground</h3>
+                    <div class="task-meta">
+                        <div class="meta-item"><strong>Tools Needed</strong>Binoculars, notepad, phone for photos</div>
+                        <div class="meta-item safety"><strong>⚠️ Safety</strong>Stay on ground - do not climb on roof unless experienced and with proper safety equipment</div>
+                    </div>
+                    <div class="steps-list">
+                        <h4>Step-by-Step Instructions</h4>
+                        <ol>
+                            <li>Walk around entire perimeter of house looking up at roof</li>
+                            <li>Use binoculars for closer inspection</li>
+                            <li>Look for: missing shingles, curled or buckled shingles</li>
+                            <li>Check for: dark spots (moss/algae), visible wear patterns</li>
+                            <li>Examine flashing around chimneys, vents, skylights</li>
+                            <li>Look for sagging areas in the roofline</li>
+                            <li>Check ridge line - should be straight, not wavy</li>
+                            <li>Examine soffits and fascia for damage, rot, or holes</li>
+                            <li>Look for debris accumulation in valleys</li>
+                            <li>Check for damaged or missing vent caps</li>
+                            <li>After rainstorms, check attic for any water intrusion signs</li>
+                            <li>Note any concerns with photos and approximate location</li>
+                        </ol>
+                    </div>
+                    <div class="tips-box"><strong>💡 Tips</strong>Most roof damage is visible from the ground. Schedule professional inspection every 3-5 years, or after severe storms. Address small issues before they become expensive repairs.</div>
+                </div>
+                
+                <div class="task-detail" id="gutters">
+                    <h3>Clean Gutters and Downspouts</h3>
+                    <div class="task-meta">
+                        <div class="meta-item"><strong>Tools Needed</strong>Sturdy ladder, work gloves, garden trowel or gutter scoop, bucket, garden hose, safety glasses</div>
+                        <div class="meta-item safety"><strong>⚠️ Safety</strong>Use ladder safely - maintain 3-point contact, don't overreach, have someone spot you</div>
+                    </div>
+                    <div class="steps-list">
+                        <h4>Step-by-Step Instructions</h4>
+                        <ol>
+                            <li>Set ladder on firm, level ground; extend 3 feet above gutter line</li>
+                            <li>Wear gloves and safety glasses (debris can harbor bacteria)</li>
+                            <li>Remove large debris by hand or with trowel into bucket</li>
+                            <li>Work away from downspouts so debris doesn't clog them</li>
+                            <li>Continue along entire gutter length</li>
+                            <li>Flush gutters with hose, starting away from downspouts</li>
+                            <li>Check that water flows freely to and down downspouts</li>
+                            <li>If downspout is clogged, try flushing with hose from top</li>
+                            <li>For stubborn clogs, use plumber's snake from bottom</li>
+                            <li>Check gutters slope properly toward downspouts (should not pool water)</li>
+                            <li>Inspect for: loose sections, holes, rust, separating seams</li>
+                            <li>Verify downspouts direct water at least 4 feet from foundation</li>
+                        </ol>
+                    </div>
+                    <div class="tips-box"><strong>💡 Tips</strong>Clogged gutters cause foundation problems, basement flooding, and fascia rot. Consider gutter guards if you have many trees. Clean more often in fall and spring.</div>
+                </div>
+                
+                <!-- Additional exterior tasks abbreviated for space -->
+                <div class="task-detail" id="exterior-caulking"><h3>Inspect Exterior Caulking</h3><p>See full instructions in the spreadsheet version.</p></div>
+                <div class="task-detail" id="window-caulking"><h3>Inspect Window Caulking (int/ext)</h3><p>See full instructions in the spreadsheet version.</p></div>
+                <div class="task-detail" id="weatherstripping"><h3>Inspect/Replace Weatherstripping</h3><p>See full instructions in the spreadsheet version.</p></div>
+                <div class="task-detail" id="pest"><h3>Pest Inspection</h3><p>See full instructions in the spreadsheet version.</p></div>
+                <div class="task-detail" id="deck"><h3>Power Wash Deck/Patio</h3><p>See full instructions in the spreadsheet version.</p></div>
+                <div class="task-detail" id="foundation"><h3>Seal Cracks in Foundation</h3><p>See full instructions in the spreadsheet version.</p></div>
+                <div class="task-detail" id="grading"><h3>Inspect Grading Around Home</h3><p>See full instructions in the spreadsheet version.</p></div>
+            </div>
+        </div>
+        
+        <div id="landscaping" class="tab-content">
+            <a href="#" class="back-link" data-tab="schedule">Back to Schedule</a>
+            <div class="detail-section">
+                <h2>🌳 Landscaping & Outdoor Maintenance Guide</h2>
+                
+                <div class="task-detail" id="winterize">
+                    <h3>Winterize Outdoor Faucets</h3>
+                    <div class="task-meta">
+                        <div class="meta-item"><strong>Tools Needed</strong>Hose bib covers (foam), screwdriver, bucket</div>
+                        <div class="meta-item safety"><strong>⚠️ Safety</strong>Complete before freezing temperatures arrive</div>
+                    </div>
+                    <div class="steps-list">
+                        <h4>Step-by-Step Instructions</h4>
+                        <ol>
+                            <li>Locate all outdoor faucets (hose bibs)</li>
+                            <li>Disconnect and drain all garden hoses</li>
+                            <li>Find interior shut-off valves for each outdoor faucet</li>
+                            <li>Turn off interior shut-off valve</li>
+                            <li>Go outside and open the outdoor faucet fully</li>
+                            <li>Go back inside and open the bleeder cap on shut-off valve (if present)</li>
+                            <li>Let water drain completely from pipes</li>
+                            <li>Leave outdoor faucet handle in open position all winter</li>
+                            <li>Close bleeder cap inside</li>
+                            <li>Install foam hose bib cover on outdoor faucet</li>
+                            <li>For frost-free sillcocks: still remove hoses but no shut-off needed</li>
+                            <li>Check that no hoses are left connected anywhere</li>
+                        </ol>
+                    </div>
+                    <div class="tips-box"><strong>💡 Tips</strong>Frozen pipes can burst and cause thousands in damage. Even "frost-free" faucets will freeze if hose is left connected (traps water in pipe). One of the most important winterization tasks.</div>
+                </div>
+                
+                <!-- Additional landscaping tasks abbreviated -->
+                <div class="task-detail" id="trees"><h3>Trim Trees and Shrubs</h3><p>See full instructions in the spreadsheet version.</p></div>
+                <div class="task-detail" id="lawn"><h3>Aerate and Reseed Lawn</h3><p>See full instructions in the spreadsheet version.</p></div>
+                <div class="task-detail" id="outdoor-fixtures"><h3>Inspect Outdoor Fixtures</h3><p>See full instructions in the spreadsheet version.</p></div>
+                <div class="task-detail" id="equipment"><h3>Service Outdoor Equipment</h3><p>See full instructions in the spreadsheet version.</p></div>
+                <div class="task-detail" id="pipe-insulation"><h3>Check Pipe Insulation</h3><p>See full instructions in the spreadsheet version.</p></div>
+                <div class="task-detail" id="hoses"><h3>Drain and Store Garden Hoses</h3><p>See full instructions in the spreadsheet version.</p></div>
+                <div class="task-detail" id="freeze-inspection"><h3>Post-Winter Freeze Damage Inspection</h3><p>See full instructions in the spreadsheet version.</p></div>
+            </div>
+        </div>
+        
+        <div id="humidity" class="tab-content">
+            <a href="#" class="back-link" data-tab="schedule">Back to Schedule</a>
+            <div class="detail-section">
+                <h2>💧 Humidity & Moisture Control Guide</h2>
+                
+                <div class="task-detail" id="dehumidifier">
+                    <h3>Clean Dehumidifier Filter</h3>
+                    <div class="task-meta">
+                        <div class="meta-item"><strong>Tools Needed</strong>Vacuum with brush attachment, mild soap, clean water, soft cloth</div>
+                        <div class="meta-item safety"><strong>⚠️ Safety</strong>Unplug unit before cleaning; let filter dry completely before reinstalling</div>
+                    </div>
+                    <div class="steps-list">
+                        <h4>Step-by-Step Instructions</h4>
+                        <ol>
+                            <li>Turn off and unplug the dehumidifier</li>
+                            <li>Locate the air filter (usually behind front grille)</li>
+                            <li>Remove filter according to your model's instructions</li>
+                            <li>Vacuum loose dust from both sides of filter</li>
+                            <li>Check filter for mold (dark spots, musty smell)</li>
+                            <li>If mold present: soak in 1:1 vinegar/water solution 15 minutes</li>
+                            <li>Wash filter with mild soap and warm water</li>
+                            <li>Rinse thoroughly - soap residue affects performance</li>
+                            <li>Shake off excess water gently</li>
+                            <li>Let air dry COMPLETELY (at least 24 hours)</li>
+                            <li>Clean the filter housing/grille while filter dries</li>
+                            <li>Reinstall dry filter securely</li>
+                            <li>Also empty and clean water collection bucket</li>
+                        </ol>
+                    </div>
+                    <div class="tips-box"><strong>💡 Tips</strong>A dirty filter reduces efficiency and spreads contaminants. Clean monthly during heavy use seasons. If filter is damaged or moldy and won't clean, replace it (most are inexpensive).</div>
+                </div>
+                
+                <div class="task-detail" id="humidity-monitor"><h3>Monitor Basement Humidity Levels</h3><p>Target 30-50% RH. Check more frequently during humid summer months.</p></div>
+                <div class="task-detail" id="condensation"><h3>Inspect for Condensation</h3><p>Check windows, pipes, and walls for moisture at seasonal transitions.</p></div>
+                <div class="task-detail" id="vapor-barrier"><h3>Check Vapor Barriers / Moisture Coating</h3><p>Your basement has thick paint coating serving as vapor barrier. Inspect for peeling, bubbling, flaking, or cracks.</p></div>
+            </div>
+        </div>
+        
+        <div id="appliances" class="tab-content">
+            <a href="#" class="back-link" data-tab="schedule">Back to Schedule</a>
+            <div class="detail-section">
+                <h2>🔌 Appliances Maintenance Guide</h2>
+                
+                <div class="task-detail" id="dryer-vent">
+                    <h3>Clean Dryer Vent</h3>
+                    <div class="task-meta">
+                        <div class="meta-item"><strong>Tools Needed</strong>Dryer vent brush kit, vacuum, screwdriver, flashlight</div>
+                        <div class="meta-item safety"><strong>⚠️ Safety</strong>Unplug dryer and disconnect gas line if applicable before cleaning - FIRE HAZARD if neglected</div>
+                    </div>
+                    <div class="steps-list">
+                        <h4>Step-by-Step Instructions</h4>
+                        <ol>
+                            <li>Pull dryer away from wall</li>
+                            <li>Unplug dryer (and turn off gas valve if gas dryer)</li>
+                            <li>Disconnect vent hose from dryer</li>
+                            <li>Vacuum inside dryer vent opening</li>
+                            <li>Insert vent brush into hose and vent - rotate while pushing</li>
+                            <li>Work from both ends: dryer and exterior vent</li>
+                            <li>Vacuum loosened lint</li>
+                            <li>Go outside, remove exterior vent cover</li>
+                            <li>Clean exterior vent and opening</li>
+                            <li>Verify damper flap opens and closes freely</li>
+                            <li>Reconnect vent hose securely (use metal clamps, not foil tape)</li>
+                            <li>Restore power/gas, push dryer back (maintain 4" clearance)</li>
+                            <li>Run empty dryer on air/fluff to test airflow</li>
+                            <li>Clean lint trap housing with vacuum</li>
+                        </ol>
+                    </div>
+                    <div class="tips-box"><strong>💡 Tips</strong>FIRE HAZARD - dryer lint is extremely flammable. Clean annually minimum, more often with heavy use. Signs of clogged vent: clothes take longer to dry, dryer is hot to touch, musty smell.</div>
+                </div>
+                
+                <div class="task-detail" id="dishwasher"><h3>Clean Dishwasher Filter</h3><p>See full instructions in the spreadsheet version.</p></div>
+                <div class="task-detail" id="washing-machine"><h3>Inspect Washing Machine Hoses</h3><p>You have braided steel hoses - good choice. Check connections annually.</p></div>
+                <div class="task-detail" id="coffee-maker"><h3>Descale Coffee Maker</h3><p>See full instructions in the spreadsheet version.</p></div>
+            </div>
+        </div>
+        
+        <div id="general" class="tab-content">
+            <a href="#" class="back-link" data-tab="schedule">Back to Schedule</a>
+            <div class="detail-section">
+                <h2>🔍 General Maintenance Guide</h2>
+                
+                <div class="task-detail" id="walkthrough">
+                    <h3>Walk-Through Inspection</h3>
+                    <div class="task-meta">
+                        <div class="meta-item"><strong>Tools Needed</strong>Notepad, phone for photos, flashlight</div>
+                        <div class="meta-item safety"><strong>⚠️ Safety</strong>No special safety concerns</div>
+                    </div>
+                    <div class="steps-list">
+                        <h4>Step-by-Step Instructions</h4>
+                        <ol>
+                            <li>START OUTSIDE: Walk perimeter of house</li>
+                            <li>Look at foundation, siding, trim for damage</li>
+                            <li>Check downspouts are directing water away</li>
+                            <li>Note landscape issues (overgrown plants touching house)</li>
+                            <li>ENTER THROUGH EACH EXTERIOR DOOR: Check operation</li>
+                            <li>EACH ROOM - Look up: ceiling stains, cracks, damaged paint</li>
+                            <li>Look at walls: cracks, nail pops, water stains</li>
+                            <li>Look down: floor condition, carpet wear, tile damage</li>
+                            <li>Check windows: operation, locks, condensation</li>
+                            <li>Test outlets with phone charger</li>
+                            <li>BATHROOMS: Run water, check drains, flush toilets</li>
+                            <li>Look under sinks for leaks</li>
+                            <li>KITCHEN: Run water, check garbage disposal, dishwasher</li>
+                            <li>Listen for unusual sounds throughout house</li>
+                            <li>Note musty or unusual odors</li>
+                            <li>Check attic access - look for signs of leaks/pests</li>
+                            <li>Check basement - moisture, cracks, sump pump</li>
+                            <li>Compile list of items needing attention</li>
+                        </ol>
+                    </div>
+                    <div class="tips-box"><strong>💡 Tips</strong>A regular walk-through catches small problems before they become big ones. Take photos of any concerns. This is also a good time to check smoke detector function.</div>
+                </div>
+                
+                <div class="task-detail" id="sump-pump"><h3>Test Sump Pump</h3><p>Pour 5 gallons of water into pit - pump should activate and remove water quickly.</p></div>
+                <div class="task-detail" id="attic"><h3>Inspect Attic</h3><p>Check for leaks, insulation, ventilation, and pests. Best done on a cool day.</p></div>
+                <div class="task-detail" id="basement"><h3>Check Basement</h3><p>Monitor humidity, check walls for moisture, inspect foundation for new cracks.</p></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Tab Navigation
+        document.querySelectorAll('nav a, .back-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const tabId = this.getAttribute('data-tab');
+                
+                // Update active nav link
+                document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+                document.querySelector(`nav a[data-tab="${tabId}"]`).classList.add('active');
+                
+                // Show selected tab
+                document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+                document.getElementById(tabId).classList.add('active');
+                
+                // Scroll to top
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        });
+        
+        // Task Links - navigate to detail and scroll to specific task
+        document.querySelectorAll('.task-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const tabId = this.getAttribute('data-tab');
+                const taskId = this.getAttribute('data-task');
+                
+                // Update nav
+                document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+                document.querySelector(`nav a[data-tab="${tabId}"]`).classList.add('active');
+                
+                // Show tab
+                document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+                document.getElementById(tabId).classList.add('active');
+                
+                // Scroll to task
+                setTimeout(() => {
+                    const taskElement = document.getElementById(taskId);
+                    if (taskElement) {
+                        taskElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        taskElement.style.boxShadow = '0 0 20px rgba(52, 152, 219, 0.5)';
+                        setTimeout(() => taskElement.style.boxShadow = '', 2000);
+                    }
+                }, 100);
+            });
+        });
+        
+        // Section Collapse Toggle
+        document.querySelectorAll('.section-header').forEach(header => {
+            header.addEventListener('click', function() {
+                this.classList.toggle('collapsed');
+                this.nextElementSibling.classList.toggle('collapsed');
+            });
+        });
+    </script>
+</body>
+</html>
