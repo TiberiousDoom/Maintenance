@@ -418,15 +418,7 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             max-height: calc(100vh - 250px);
             overflow-y: auto;
-        }
-        #calendar-header {
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-        #calendar-header th {
-            background: #f8f9fa;
-            box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+            position: relative;
         }
         
         /* Detail Page Styles */
@@ -547,15 +539,22 @@
         }
         
         /* Gantt Chart Styles */
-        
+
         .gantt-table {
             min-width: 900px;
+            border-collapse: separate;
+            border-spacing: 0;
         }
-        
+
         .gantt-table th {
             text-align: center;
             padding: 10px 5px;
             min-width: 50px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: #f8f9fa;
+            box-shadow: 0 2px 3px rgba(0,0,0,0.1);
         }
         
         .gantt-table td {
@@ -2403,6 +2402,42 @@
             calendarBody.innerHTML = html;
         }
 
+        // ==================== TOAST NOTIFICATION ====================
+
+        var toastShown = false;
+
+        function showCalendarToast() {
+            if (toastShown) return;
+            toastShown = true;
+
+            var toast = document.getElementById('calendar-toast');
+            var infoIcon = document.getElementById('calendar-info');
+
+            if (!toast || !infoIcon) return;
+
+            // Show the toast
+            toast.style.display = 'block';
+
+            // After 8 seconds (enough time to read), start hiding
+            setTimeout(function() {
+                toast.classList.add('hiding');
+
+                // After fade animation, hide completely and show info icon
+                setTimeout(function() {
+                    toast.style.display = 'none';
+                    infoIcon.classList.add('visible');
+                }, 500);
+            }, 8000);
+        }
+
+        // Initially hide the toast
+        (function() {
+            var toastEl = document.getElementById('calendar-toast');
+            if (toastEl) {
+                toastEl.style.display = 'none';
+            }
+        })();
+
         // ==================== TAB NAVIGATION ====================
 
         document.querySelectorAll('nav a, .back-link').forEach(link => {
@@ -2421,6 +2456,7 @@
                 // Update calendar when switching to gantt tab
                 if (tabId === 'gantt') {
                     updateCalendar();
+                    showCalendarToast();
                 }
 
                 // Scroll to top
@@ -2554,54 +2590,6 @@
 
         // Initial calendar update
         updateCalendar();
-
-        // ==================== TOAST NOTIFICATION ====================
-
-        // Show toast when calendar tab is first visited
-        var toastShown = false;
-        var originalTabHandler = null;
-
-        function showCalendarToast() {
-            if (toastShown) return;
-            toastShown = true;
-
-            var toast = document.getElementById('calendar-toast');
-            var infoIcon = document.getElementById('calendar-info');
-
-            if (!toast || !infoIcon) return;
-
-            // Show the toast
-            toast.classList.remove('hidden', 'hiding');
-            toast.style.display = 'block';
-
-            // After 8 seconds (enough time to read), start hiding
-            setTimeout(function() {
-                toast.classList.add('hiding');
-
-                // After fade animation, hide completely and show info icon
-                setTimeout(function() {
-                    toast.classList.add('hidden');
-                    infoIcon.classList.add('visible');
-                }, 500);
-            }, 8000);
-        }
-
-        // Initially hide the toast until calendar tab is visited
-        var toastEl = document.getElementById('calendar-toast');
-        if (toastEl) {
-            toastEl.style.display = 'none';
-        }
-
-        // Hook into tab switching to show toast when calendar is first opened
-        document.querySelectorAll('nav a[data-tab]').forEach(function(link) {
-            link.addEventListener('click', function() {
-                var tabId = this.getAttribute('data-tab');
-                if (tabId === 'gantt') {
-                    // Small delay to let tab switch animation start
-                    setTimeout(showCalendarToast, 300);
-                }
-            });
-        });
     </script>
 </body>
 </html>
